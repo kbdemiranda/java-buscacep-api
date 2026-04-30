@@ -11,7 +11,7 @@ Provider strategy (planned contract):
 2. If not found, fallback to ViaCEP.
 3. If not found in either provider, return `404`.
 
-Flyway migrations run outside the application via Docker Compose.
+Flyway migrations run automatically when the Spring Boot application starts.
 
 ## 2) Solution Architecture
 
@@ -38,8 +38,7 @@ Intended package boundaries:
 - Java 21
 - Spring Boot 4
 - Maven
-- PostgreSQL (`kbdemiranda/postgres:multiarch`)
-- Flyway container (`flyway/flyway:11-alpine`)
+- PostgreSQL (`postgres:17-alpine`)
 - WireMock (`wiremock/wiremock:3.13.1`)
 - Docker Compose
 
@@ -58,7 +57,6 @@ docker compose up --build
 
 Services started with one command:
 - `postgres` (database)
-- `flyway` (migration runner)
 - `wiremock` (primary CEP mock source, exposed at `http://localhost:8081`)
 - `app` (API at `http://localhost:8080`)
 
@@ -80,7 +78,6 @@ Start infra:
 
 ```bash
 docker compose up -d postgres wiremock
-docker compose run --rm flyway
 ```
 
 Run app:
@@ -89,7 +86,8 @@ Run app:
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/buscacep \
 SPRING_DATASOURCE_USERNAME=buscacep \
 SPRING_DATASOURCE_PASSWORD=buscacep \
-SPRING_FLYWAY_ENABLED=false \
+SPRING_JPA_HIBERNATE_DDL_AUTO=validate \
+SPRING_FLYWAY_ENABLED=true \
 CEP_CLIENT_WIREMOCK_URL=http://localhost:8081 \
 CEP_CLIENT_VIACEP_URL=https://viacep.com.br/ws \
 ./mvnw spring-boot:run
@@ -103,10 +101,11 @@ CEP_CLIENT_VIACEP_URL=https://viacep.com.br/ws \
 | `POSTGRES_USER` | PostgreSQL username | `buscacep` |
 | `POSTGRES_PASSWORD` | PostgreSQL password | `buscacep` |
 | `POSTGRES_PORT` | Exposed PostgreSQL port | `5432` |
-| `SPRING_DATASOURCE_URL` | JDBC URL for app/Flyway | `jdbc:postgresql://postgres:5432/buscacep` |
+| `SPRING_DATASOURCE_URL` | JDBC URL for application datasource | `jdbc:postgresql://postgres:5432/buscacep` |
 | `SPRING_DATASOURCE_USERNAME` | JDBC username | `buscacep` |
 | `SPRING_DATASOURCE_PASSWORD` | JDBC password | `buscacep` |
-| `SPRING_FLYWAY_ENABLED` | Keep `false` (Flyway runs externally) | `false` |
+| `SPRING_JPA_HIBERNATE_DDL_AUTO` | JPA schema validation mode | `validate` |
+| `SPRING_FLYWAY_ENABLED` | Enable startup migrations inside app | `true` |
 | `CEP_CLIENT_WIREMOCK_URL` | Primary CEP provider base URL | `http://wiremock:8080` |
 | `CEP_CLIENT_VIACEP_URL` | Secondary CEP provider base URL | `https://viacep.com.br/ws` |
 | `APP_PORT` | API port mapping | `8080` |
@@ -164,9 +163,9 @@ Migration scripts directory:
 `src/main/resources/db/migration`
 
 Execution model:
-- Flyway runs in dedicated container (`flyway` service).
-- App starts only after Flyway migration succeeds.
-- In-app Flyway auto-execution remains disabled (`SPRING_FLYWAY_ENABLED=false`).
+- Flyway runs at Spring Boot startup (`SPRING_FLYWAY_ENABLED=true`).
+- JPA validates the existing schema (`SPRING_JPA_HIBERNATE_DDL_AUTO=validate`).
+- Hibernate does not create or update tables automatically.
 
 ## 11) Project Structure
 

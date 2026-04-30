@@ -1,3 +1,12 @@
 spring:
   application:
     name: java-buscacep-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:45432/buscacep}
+    username: ${SPRING_DATASOURCE_USERNAME:buscacep}
+    password: ${SPRING_DATASOURCE_PASSWORD:buscacep}
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED:true}
