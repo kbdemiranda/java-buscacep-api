@@ -10,3 +10,8 @@ spring:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
   flyway:
     enabled: ${SPRING_FLYWAY_ENABLED:true}
+
+cep:
+  client:
+    wiremock-url: ${CEP_CLIENT_WIREMOCK_URL:http://localhost:8081}
+    viacep-url: ${CEP_CLIENT_VIACEP_URL:https://viacep.com.br/ws}
