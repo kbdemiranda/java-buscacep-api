@@ -1,10 +1,10 @@
 package io.github.kbdemiranda.buscacep.client;
 
 import io.github.kbdemiranda.buscacep.dto.CepResponseDTO;
+import io.github.kbdemiranda.buscacep.dto.ViaCepResponseDTO;
 import io.github.kbdemiranda.buscacep.exception.ExternalCepClientException;
 import io.github.kbdemiranda.buscacep.config.CepClientProperties;
 import io.github.kbdemiranda.buscacep.model.CepProvider;
-import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatusCode;
@@ -20,27 +20,27 @@ public class ViaCepClient implements CepClient {
     private final CepClientProperties cepClientProperties;
 
     @Override
-    @SuppressWarnings("unchecked")
     public Optional<CepResponseDTO> findByCep(String cep) {
         String url = cepClientProperties.viacepUrl() + "/{cep}/json";
         try {
-            Map<String, Object> response = restTemplate.getForObject(url, Map.class, cep);
+            ViaCepResponseDTO response = restTemplate.getForObject(url, ViaCepResponseDTO.class, cep);
             if (response == null) {
                 return Optional.empty();
             }
-
-            Object erro = response.get("erro");
-            if (erro instanceof Boolean && (Boolean) erro) {
+            if (Boolean.TRUE.equals(response.erro())) {
+                return Optional.empty();
+            }
+            if (response.cep() == null || response.logradouro() == null) {
                 return Optional.empty();
             }
 
             CepResponseDTO dto = CepResponseDTO.builder()
-                .cep((String) response.get("cep"))
-                .logradouro((String) response.get("logradouro"))
-                .complemento((String) response.get("complemento"))
-                .bairro((String) response.get("bairro"))
-                .localidade((String) response.get("localidade"))
-                .uf((String) response.get("uf"))
+                .cep(response.cep())
+                .logradouro(response.logradouro())
+                .complemento(response.complemento())
+                .bairro(response.bairro())
+                .localidade(response.localidade())
+                .uf(response.uf())
                 .build();
             return Optional.of(dto);
         } catch (HttpClientErrorException e) {
