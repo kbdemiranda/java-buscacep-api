@@ -5,10 +5,13 @@ import io.github.kbdemiranda.buscacep.exception.CepNotFoundException;
 import io.github.kbdemiranda.buscacep.exception.ExternalCepClientException;
 import io.github.kbdemiranda.buscacep.exception.InvalidCepException;
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 @RestControllerAdvice
 public class RestExceptionHandler {
@@ -26,6 +29,23 @@ public class RestExceptionHandler {
     @ExceptionHandler(ExternalCepClientException.class)
     public ResponseEntity<ErrorResponseDTO> handleExternalClientError(ExternalCepClientException e) {
         return buildResponse(HttpStatus.BAD_GATEWAY, e.getMessage());
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponseDTO> handleConstraintViolation(ConstraintViolationException e) {
+        String message = e.getConstraintViolations().stream()
+            .map(violation -> violation.getMessage())
+            .collect(Collectors.joining("; "));
+        return buildResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponseDTO> handleHandlerMethodValidation(HandlerMethodValidationException e) {
+        String message = e.getParameterValidationResults().stream()
+            .flatMap(result -> result.getResolvableErrors().stream())
+            .map(error -> error.getDefaultMessage() == null ? "Validation error" : error.getDefaultMessage())
+            .collect(Collectors.joining("; "));
+        return buildResponse(HttpStatus.BAD_REQUEST, message.isBlank() ? "Validation error" : message);
     }
 
     private ResponseEntity<ErrorResponseDTO> buildResponse(HttpStatus status, String message) {

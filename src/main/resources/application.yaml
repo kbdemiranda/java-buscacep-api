@@ -15,3 +15,9 @@ cep:
   client:
     wiremock-url: ${CEP_CLIENT_WIREMOCK_URL:http://localhost:8081}
     viacep-url: ${CEP_CLIENT_VIACEP_URL:https://viacep.com.br/ws}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
