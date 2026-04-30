@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.kbdemiranda.buscacep.client.ViaCepClient;
 import io.github.kbdemiranda.buscacep.client.WiremockCepClient;
+import io.github.kbdemiranda.buscacep.dto.CepQueryLogResponseDTO;
 import io.github.kbdemiranda.buscacep.dto.CepResponseDTO;
 import io.github.kbdemiranda.buscacep.exception.CepNotFoundException;
 import io.github.kbdemiranda.buscacep.exception.ExternalCepClientException;
@@ -15,6 +16,10 @@ import io.github.kbdemiranda.buscacep.repository.CepQueryLogRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -53,6 +58,12 @@ public class CepService {
         }
     }
 
+    public Page<CepQueryLogResponseDTO> findAll(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("requestTimestamp").descending());
+        return cepQueryLogRepository.findAll(pageable)
+            .map(this::toResponseDTO);
+    }
+
     private String normalizeAndValidateCep(String rawCep) {
         String normalized = rawCep.replace("-", "").trim();
         if (!normalized.matches("\\d{8}")) {
@@ -85,5 +96,15 @@ public class CepService {
             return null;
         }
         return objectMapper.valueToTree(response);
+    }
+
+    private CepQueryLogResponseDTO toResponseDTO(CepQueryLog log) {
+        return CepQueryLogResponseDTO.builder()
+            .externalId(log.getExternalId())
+            .cep(log.getCep())
+            .provider(log.getProvider().name())
+            .status(log.getStatus().name())
+            .requestTimestamp(log.getRequestTimestamp())
+            .build();
     }
 }
