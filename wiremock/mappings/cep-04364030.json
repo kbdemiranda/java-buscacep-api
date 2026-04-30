@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/cep/04364030"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "cep": "04364-030",
+      "logradouro": "Rua das Flechas",
+      "complemento": "",
+      "unidade": "",
+      "bairro": "Vila Santa Catarina",
+      "localidade": "São Paulo",
+      "uf": "SP",
+      "estado": "São Paulo",
+      "regiao": "Sudeste",
+      "ibge": "3550308",
+      "gia": "1004",
+      "ddd": "11",
+      "siafi": "7107"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/cep/04730090"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "cep": "04730-090",
+      "logradouro": "Avenida das Nações Unidas",
+      "complemento": "",
+      "unidade": "",
+      "bairro": "Várzea de Baixo",
+      "localidade": "São Paulo",
+      "uf": "SP",
+      "estado": "São Paulo",
+      "regiao": "Sudeste",
+      "ibge": "3550308",
+      "gia": "1004",
+      "ddd": "11",
+      "siafi": "7107"
+    }
+  }
+}

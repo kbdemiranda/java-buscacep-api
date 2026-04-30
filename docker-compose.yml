@@ -1,0 +1,72 @@
+services:
+  # PostgreSQL database (Apple Silicon compatible via multiarch image)
+  postgres:
+    image: kbdemiranda/postgres:multiarch
+    container_name: buscacep-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # Schema migrations run before app startup (outside Spring Boot runtime)
+  flyway:
+    image: flyway/flyway:11-alpine
+    container_name: buscacep-flyway
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      - -url=${SPRING_DATASOURCE_URL}
+      - -user=${SPRING_DATASOURCE_USERNAME}
+      - -password=${SPRING_DATASOURCE_PASSWORD}
+      - -connectRetries=30
+      - "-locations=filesystem:/flyway/sql"
+      - migrate
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/sql:ro
+    restart: "no"
+
+  # Primary CEP source for local/mock data
+  wiremock:
+    image: wiremock/wiremock:3.13.1
+    container_name: buscacep-wiremock
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./wiremock/mappings:/home/wiremock/mappings:ro
+
+  # Spring Boot API
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: buscacep-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
+      wiremock:
+        condition: service_started
+    ports:
+      - "${APP_PORT}:8080"
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_FLYWAY_ENABLED: ${SPRING_FLYWAY_ENABLED}
+      CEP_CLIENT_WIREMOCK_URL: ${CEP_CLIENT_WIREMOCK_URL}
+      CEP_CLIENT_VIACEP_URL: ${CEP_CLIENT_VIACEP_URL}
+
+volumes:
+  postgres_data:

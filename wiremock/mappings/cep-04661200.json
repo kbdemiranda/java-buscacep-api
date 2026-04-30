@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/cep/04661200"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "cep": "04661-200",
+      "logradouro": "Avenida Interlagos",
+      "complemento": "de 2253 a 3493 - lado ímpar",
+      "unidade": "",
+      "bairro": "Jardim Umuarama",
+      "localidade": "São Paulo",
+      "uf": "SP",
+      "estado": "São Paulo",
+      "regiao": "Sudeste",
+      "ibge": "3550308",
+      "gia": "1004",
+      "ddd": "11",
+      "siafi": "7107"
+    }
+  }
+}

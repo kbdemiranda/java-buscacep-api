@@ -1,0 +1,14 @@
+services:
+  mock-cep:
+    image: wiremock/wiremock:3.13.1
+    container_name: buscacep-mock-cep
+    ports:
+      - "8089:8080"
+    command:
+      - --verbose
+
+  app:
+    depends_on:
+      - mock-cep
+    environment:
+      CEP_CLIENT_BASE_URL: http://mock-cep:8080

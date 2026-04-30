@@ -1,0 +1,24 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/cep/12345678"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "cep": "12345-678",
+      "logradouro": "Rua Exemplo",
+      "complemento": "",
+      "bairro": "Centro",
+      "localidade": "Sao Paulo",
+      "uf": "SP",
+      "ibge": "3550308",
+      "gia": "1004",
+      "ddd": "11",
+      "siafi": "7107"
+    }
+  }
+}
