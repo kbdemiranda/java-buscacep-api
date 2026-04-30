@@ -6,6 +6,7 @@ import io.github.kbdemiranda.buscacep.client.ViaCepClient;
 import io.github.kbdemiranda.buscacep.client.WiremockCepClient;
 import io.github.kbdemiranda.buscacep.dto.CepQueryLogResponseDTO;
 import io.github.kbdemiranda.buscacep.dto.CepResponseDTO;
+import io.github.kbdemiranda.buscacep.dto.PageResponse;
 import io.github.kbdemiranda.buscacep.exception.CepNotFoundException;
 import io.github.kbdemiranda.buscacep.exception.ExternalCepClientException;
 import io.github.kbdemiranda.buscacep.exception.InvalidCepException;
@@ -16,7 +17,6 @@ import io.github.kbdemiranda.buscacep.repository.CepQueryLogRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -58,10 +58,16 @@ public class CepService {
         }
     }
 
-    public Page<CepQueryLogResponseDTO> findAll(int page, int size) {
+    public PageResponse<CepQueryLogResponseDTO> findAll(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("requestTimestamp").descending());
-        return cepQueryLogRepository.findAll(pageable)
-            .map(this::toResponseDTO);
+        var pageResult = cepQueryLogRepository.findAll(pageable).map(this::toResponseDTO);
+        return new PageResponse<>(
+            pageResult.getContent(),
+            pageResult.getNumber(),
+            pageResult.getSize(),
+            pageResult.getTotalElements(),
+            pageResult.getTotalPages()
+        );
     }
 
     private String normalizeAndValidateCep(String rawCep) {
