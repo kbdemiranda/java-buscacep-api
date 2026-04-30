@@ -83,7 +83,7 @@ docker compose up -d postgres wiremock
 Run app:
 
 ```bash
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/buscacep \
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:45432/buscacep \
 SPRING_DATASOURCE_USERNAME=buscacep \
 SPRING_DATASOURCE_PASSWORD=buscacep \
 SPRING_JPA_HIBERNATE_DDL_AUTO=validate \
@@ -100,7 +100,6 @@ CEP_CLIENT_VIACEP_URL=https://viacep.com.br/ws \
 | `POSTGRES_DB` | PostgreSQL database name | `buscacep` |
 | `POSTGRES_USER` | PostgreSQL username | `buscacep` |
 | `POSTGRES_PASSWORD` | PostgreSQL password | `buscacep` |
-| `POSTGRES_PORT` | Exposed PostgreSQL port | `5432` |
 | `SPRING_DATASOURCE_URL` | JDBC URL for application datasource | `jdbc:postgresql://postgres:5432/buscacep` |
 | `SPRING_DATASOURCE_USERNAME` | JDBC username | `buscacep` |
 | `SPRING_DATASOURCE_PASSWORD` | JDBC password | `buscacep` |
