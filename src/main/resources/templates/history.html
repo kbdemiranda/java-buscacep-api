@@ -22,17 +22,44 @@
     <section class="rounded-2xl border border-slate-300 bg-slate-100 p-8">
         <h1 class="mb-5 text-4xl font-bold tracking-tight">Histórico de Consultas</h1>
         <form id="filtersForm" class="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-            <input id="cepFilter" type="text" placeholder="CEP" class="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-            <input id="providerFilter" type="text" placeholder="Provider" class="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-            <input id="statusFilter" type="text" placeholder="Status" class="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-            <input id="dateFromFilter" type="date" class="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-            <input id="dateToFilter" type="date" class="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-            <select id="sizeFilter" class="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500">
-                <option value="5">5 por página</option>
-                <option value="10">10 por página</option>
-                <option value="20">20 por página</option>
-                <option value="50">50 por página</option>
-            </select>
+            <div>
+                <label for="cepFilter" class="mb-1 block text-sm font-medium text-slate-700">CEP</label>
+                <input id="cepFilter" type="text" placeholder="00000000" class="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+            </div>
+            <div>
+                <label for="providerFilter" class="mb-1 block text-sm font-medium text-slate-700">Provedor</label>
+                <select id="providerFilter" class="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                    <option value="">Todos</option>
+                    <option value="WIREMOCK">WireMock</option>
+                    <option value="VIACEP">ViaCEP</option>
+                </select>
+            </div>
+            <div>
+                <label for="statusFilter" class="mb-1 block text-sm font-medium text-slate-700">Status</label>
+                <select id="statusFilter" class="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                    <option value="">Todos</option>
+                    <option value="SUCCESS">Sucesso</option>
+                    <option value="NOT_FOUND">Não encontrado</option>
+                    <option value="ERROR">Erro</option>
+                </select>
+            </div>
+            <div>
+                <label for="dateFromFilter" class="mb-1 block text-sm font-medium text-slate-700">Data inicial</label>
+                <input id="dateFromFilter" type="date" class="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+            </div>
+            <div>
+                <label for="dateToFilter" class="mb-1 block text-sm font-medium text-slate-700">Data final</label>
+                <input id="dateToFilter" type="date" class="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+            </div>
+            <div>
+                <label for="sizeFilter" class="mb-1 block text-sm font-medium text-slate-700">Itens por página</label>
+                <select id="sizeFilter" class="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
             <div class="md:col-span-3 flex items-center gap-2">
                 <button type="submit" class="rounded-md bg-indigo-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-800">Filtrar</button>
                 <button id="clearFiltersBtn" type="button" class="rounded-md border border-slate-300 px-4 py-2 text-sm transition hover:bg-slate-200">Limpar</button>
@@ -46,7 +73,7 @@
                 <thead>
                 <tr class="border-b border-slate-300">
                     <th class="py-3 pr-3">CEP</th>
-                    <th class="py-3 pr-3">Provider</th>
+                    <th class="py-3 pr-3">Provedor</th>
                     <th class="py-3 pr-3">Status</th>
                     <th class="py-3 pr-3">Data/Hora</th>
                     <th class="py-3 text-right">Ação</th>
@@ -132,6 +159,15 @@
     };
     let currentItems = [];
     let currentJson = "{}";
+    const providerLabels = {
+        WIREMOCK: "WireMock",
+        VIACEP: "ViaCEP"
+    };
+    const statusLabels = {
+        SUCCESS: "Sucesso",
+        NOT_FOUND: "Não encontrado",
+        ERROR: "Erro"
+    };
 
     cepFilter.value = filters.cep;
     providerFilter.value = filters.provider;
@@ -161,6 +197,19 @@
         loading.classList.toggle("hidden", !isLoading);
     };
 
+    const providerLabel = (value) => providerLabels[value] ?? (value || "-");
+    const statusLabel = (value) => statusLabels[value] ?? (value || "-");
+
+    const toBackendDateTimeStart = (dateValue) => {
+        if (!dateValue) return "";
+        return `${dateValue}T00:00:00`;
+    };
+
+    const toBackendDateTimeEnd = (dateValue) => {
+        if (!dateValue) return "";
+        return `${dateValue}T23:59:59`;
+    };
+
     const updateUrl = () => {
         const params = new URLSearchParams();
         params.set("page", String(currentPage));
@@ -176,8 +225,8 @@
     const openModal = (item) => {
         detailFields.innerHTML = `
             <p><span class="font-medium">CEP:</span> ${item.cep ?? "-"}</p>
-            <p><span class="font-medium">Provider:</span> ${item.provider ?? "-"}</p>
-            <p><span class="font-medium">Status:</span> ${item.status ?? "-"}</p>
+            <p><span class="font-medium">Provedor:</span> ${providerLabel(item.provider)}</p>
+            <p><span class="font-medium">Status:</span> ${statusLabel(item.status)}</p>
             <p><span class="font-medium">Timestamp:</span> ${formatDate(item.requestTimestamp)}</p>
         `;
         currentJson = JSON.stringify(item, null, 2);
@@ -203,8 +252,8 @@
         historyBody.innerHTML = currentItems.map((item, index) => `
             <tr class="border-b border-slate-300 transition hover:bg-slate-200">
                 <td class="py-3 pr-3">${item.cep ?? "-"}</td>
-                <td class="py-3 pr-3">${item.provider ?? "-"}</td>
-                <td class="py-3 pr-3">${item.status ?? "-"}</td>
+                <td class="py-3 pr-3">${providerLabel(item.provider)}</td>
+                <td class="py-3 pr-3">${statusLabel(item.status)}</td>
                 <td class="py-3 pr-3">${formatDate(item.requestTimestamp)}</td>
                 <td class="py-3 text-right">
                     <button type="button" data-index="${index}" class="rounded-md border border-slate-300 px-2 py-1 text-xs transition hover:bg-slate-200">Ver detalhes</button>
@@ -224,8 +273,8 @@
             if (filters.cep) params.set("cep", filters.cep);
             if (filters.provider) params.set("provider", filters.provider);
             if (filters.status) params.set("status", filters.status);
-            if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
-            if (filters.dateTo) params.set("dateTo", filters.dateTo);
+            if (filters.dateFrom) params.set("dateFrom", toBackendDateTimeStart(filters.dateFrom));
+            if (filters.dateTo) params.set("dateTo", toBackendDateTimeEnd(filters.dateTo));
             const response = await fetch(`/api/v1/cep-consultas?${params.toString()}`);
             if (!response.ok) {
                 throw new Error("Erro ao carregar histórico");
