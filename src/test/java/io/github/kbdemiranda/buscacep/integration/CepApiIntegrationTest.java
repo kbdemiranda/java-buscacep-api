@@ -58,10 +58,10 @@ class CepApiIntegrationTest {
     }
 
     @Test
-    void shouldReturn200AndPersistWiremockSuccessWhenCepIsFoundInWiremock() throws Exception {
+    void shouldReturnZipCodeWhenFoundInWireMock() throws Exception {
         when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
 
-        mockMvc.perform(get("/api/v1/ceps/{cep}", "04364030"))
+        mockMvc.perform(get("/api/v1/zip-codes/{cep}", "04364030"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.cep").value("04364-030"))
             .andExpect(jsonPath("$.logradouro").value("Rua de teste"))
@@ -78,11 +78,11 @@ class CepApiIntegrationTest {
     }
 
     @Test
-    void shouldFallbackToViaCepWhenWiremockDoesNotFindCep() throws Exception {
+    void shouldFallbackToViaCepWhenWireMockDoesNotFindZipCode() throws Exception {
         when(wiremockCepClient.findByCep("30140071")).thenReturn(Optional.empty());
         when(viaCepClient.findByCep("30140071")).thenReturn(Optional.of(buildResponse("30140-071")));
 
-        mockMvc.perform(get("/api/v1/ceps/{cep}", "30140071"))
+        mockMvc.perform(get("/api/v1/zip-codes/{cep}", "30140071"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.cep").value("30140-071"));
 
@@ -97,17 +97,17 @@ class CepApiIntegrationTest {
     }
 
     @Test
-    void shouldReturn404AndPersistNotFoundWhenCepDoesNotExist() throws Exception {
+    void shouldReturnNotFoundWhenZipCodeDoesNotExist() throws Exception {
         when(wiremockCepClient.findByCep("00000000")).thenReturn(Optional.empty());
         when(viaCepClient.findByCep("00000000")).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/v1/ceps/{cep}", "00000000"))
+        mockMvc.perform(get("/api/v1/zip-codes/{cep}", "00000000"))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.timestamp").exists())
             .andExpect(jsonPath("$.status").value(404))
             .andExpect(jsonPath("$.error").value("Not Found"))
             .andExpect(jsonPath("$.message").value("CEP não encontrado"))
-            .andExpect(jsonPath("$.path").value("/api/v1/ceps/00000000"));
+            .andExpect(jsonPath("$.path").value("/api/v1/zip-codes/00000000"));
 
         assertThat(cepQueryLogRepository.count()).isEqualTo(1);
         var log = cepQueryLogRepository.findAll().getFirst();
@@ -116,13 +116,13 @@ class CepApiIntegrationTest {
 
     @Test
     void shouldReturn400AndNotCallClientsForInvalidCep() throws Exception {
-        mockMvc.perform(get("/api/v1/ceps/{cep}", "123"))
+        mockMvc.perform(get("/api/v1/zip-codes/{cep}", "123"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.timestamp").exists())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.error").value("Bad Request"))
             .andExpect(jsonPath("$.message").exists())
-            .andExpect(jsonPath("$.path").value("/api/v1/ceps/123"));
+            .andExpect(jsonPath("$.path").value("/api/v1/zip-codes/123"));
 
         verify(wiremockCepClient, never()).findByCep(org.mockito.ArgumentMatchers.anyString());
         verify(viaCepClient, never()).findByCep(org.mockito.ArgumentMatchers.anyString());
@@ -133,7 +133,7 @@ class CepApiIntegrationTest {
     void shouldNormalizeFormattedCepBeforePersisting() throws Exception {
         when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
 
-        mockMvc.perform(get("/api/v1/ceps/{cep}", "04364-030"))
+        mockMvc.perform(get("/api/v1/zip-codes/{cep}", "04364-030"))
             .andExpect(status().isOk());
 
         assertThat(cepQueryLogRepository.count()).isEqualTo(1);
@@ -146,7 +146,7 @@ class CepApiIntegrationTest {
         when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
         performLookup("04364030");
 
-        mockMvc.perform(get("/api/v1/cep-consultas?page=0&size=10"))
+        mockMvc.perform(get("/api/v1/zip-code-queries?page=0&size=10"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isArray())
             .andExpect(jsonPath("$.page").value(0))
@@ -160,7 +160,7 @@ class CepApiIntegrationTest {
         when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
         performLookup("04364030");
 
-        mockMvc.perform(get("/api/v1/cep-consultas"))
+        mockMvc.perform(get("/api/v1/zip-code-queries"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page").value(0))
             .andExpect(jsonPath("$.size").value(10))
@@ -184,7 +184,7 @@ class CepApiIntegrationTest {
         performLookup("04730090");
         performLookup("01153000");
 
-        mockMvc.perform(get("/api/v1/cep-consultas?page=1&size=5"))
+        mockMvc.perform(get("/api/v1/zip-code-queries?page=1&size=5"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page").value(1))
             .andExpect(jsonPath("$.size").value(5))
@@ -194,13 +194,13 @@ class CepApiIntegrationTest {
     }
 
     @Test
-    void shouldFilterHistoryByCep() throws Exception {
+    void shouldListZipCodeQueriesWithFilters() throws Exception {
         when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
         when(wiremockCepClient.findByCep("01001000")).thenReturn(Optional.of(buildResponse("01001-000")));
         performLookup("04364030");
         performLookup("01001000");
 
-        mockMvc.perform(get("/api/v1/cep-consultas?cep=04364-030"))
+        mockMvc.perform(get("/api/v1/zip-code-queries?cep=04364-030"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content.length()").value(1))
             .andExpect(jsonPath("$.content[0].cep").value("04364030"));
@@ -212,10 +212,10 @@ class CepApiIntegrationTest {
         when(wiremockCepClient.findByCep("00000000")).thenReturn(Optional.empty());
         when(viaCepClient.findByCep("00000000")).thenReturn(Optional.empty());
         performLookup("04364030");
-        mockMvc.perform(get("/api/v1/ceps/{cep}", "00000000"))
+        mockMvc.perform(get("/api/v1/zip-codes/{cep}", "00000000"))
             .andExpect(status().isNotFound());
 
-        mockMvc.perform(get("/api/v1/cep-consultas?status=NOT_FOUND"))
+        mockMvc.perform(get("/api/v1/zip-code-queries?status=NOT_FOUND"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content.length()").value(1))
             .andExpect(jsonPath("$.content[0].status").value("NOT_FOUND"));
@@ -229,7 +229,7 @@ class CepApiIntegrationTest {
         performLookup("04364030");
         performLookup("30140071");
 
-        mockMvc.perform(get("/api/v1/cep-consultas?provider=VIACEP"))
+        mockMvc.perform(get("/api/v1/zip-code-queries?provider=VIACEP"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content.length()").value(1))
             .andExpect(jsonPath("$.content[0].provider").value("VIACEP"));
@@ -240,13 +240,13 @@ class CepApiIntegrationTest {
         when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
         performLookup("04364030");
 
-        mockMvc.perform(get("/api/v1/cep-consultas")
+        mockMvc.perform(get("/api/v1/zip-code-queries")
                 .param("dateFrom", "2000-01-01T00:00:00")
                 .param("dateTo", "2100-01-01T00:00:00"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content.length()").value(1));
 
-        mockMvc.perform(get("/api/v1/cep-consultas")
+        mockMvc.perform(get("/api/v1/zip-code-queries")
                 .param("dateFrom", "2100-01-01T00:00:00")
                 .param("dateTo", "2100-01-02T00:00:00"))
             .andExpect(status().isOk())
@@ -261,7 +261,7 @@ class CepApiIntegrationTest {
         performLookup("04364030");
         performLookup("30140071");
 
-        mockMvc.perform(get("/api/v1/cep-consultas")
+        mockMvc.perform(get("/api/v1/zip-code-queries")
                 .param("cep", "30140-071")
                 .param("status", "SUCCESS")
                 .param("provider", "VIACEP")
@@ -276,7 +276,7 @@ class CepApiIntegrationTest {
 
     @Test
     void shouldReturn400WhenDateRangeIsInvalid() throws Exception {
-        mockMvc.perform(get("/api/v1/cep-consultas")
+        mockMvc.perform(get("/api/v1/zip-code-queries")
                 .param("dateFrom", "2026-04-30T23:59:59")
                 .param("dateTo", "2026-04-01T00:00:00"))
             .andExpect(status().isBadRequest())
@@ -284,44 +284,44 @@ class CepApiIntegrationTest {
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.error").value("Bad Request"))
             .andExpect(jsonPath("$.message").value("dateFrom must be before or equal to dateTo"))
-            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas"));
+            .andExpect(jsonPath("$.path").value("/api/v1/zip-code-queries"));
     }
 
     @Test
     void shouldReturn400WhenStatusIsInvalid() throws Exception {
-        mockMvc.perform(get("/api/v1/cep-consultas").param("status", "DONE"))
+        mockMvc.perform(get("/api/v1/zip-code-queries").param("status", "DONE"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.timestamp").exists())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.error").value("Bad Request"))
             .andExpect(jsonPath("$.message").value("Parâmetro inválido"))
-            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas"));
+            .andExpect(jsonPath("$.path").value("/api/v1/zip-code-queries"));
     }
 
     @Test
     void shouldReturn400WhenProviderIsInvalid() throws Exception {
-        mockMvc.perform(get("/api/v1/cep-consultas").param("provider", "ABC"))
+        mockMvc.perform(get("/api/v1/zip-code-queries").param("provider", "ABC"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.timestamp").exists())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.error").value("Bad Request"))
             .andExpect(jsonPath("$.message").value("Parâmetro inválido"))
-            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas"));
+            .andExpect(jsonPath("$.path").value("/api/v1/zip-code-queries"));
     }
 
     @Test
     void shouldReturn400WhenDateIsInvalid() throws Exception {
-        mockMvc.perform(get("/api/v1/cep-consultas").param("dateFrom", "2026-04-01"))
+        mockMvc.perform(get("/api/v1/zip-code-queries").param("dateFrom", "2026-04-01"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.timestamp").exists())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.error").value("Bad Request"))
             .andExpect(jsonPath("$.message").value("Parâmetro inválido"))
-            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas"));
+            .andExpect(jsonPath("$.path").value("/api/v1/zip-code-queries"));
     }
 
     private void performLookup(String cep) throws Exception {
-        mockMvc.perform(get("/api/v1/ceps/{cep}", cep))
+        mockMvc.perform(get("/api/v1/zip-codes/{cep}", cep))
             .andExpect(status().isOk());
     }
 

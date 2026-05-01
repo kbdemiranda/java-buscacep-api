@@ -31,15 +31,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Validated
-@Tag(name = "CEP Query Logs", description = "Endpoints for listing CEP query logs")
+@Tag(name = "Zip Code Queries", description = "Endpoints for listing and retrieving zip code queries")
 public class CepQueryLogController {
 
     private final CepService cepService;
 
-    @GetMapping("/cep-consultas")
+    @GetMapping("/zip-code-queries")
     @Operation(
-        summary = "List CEP query logs",
-        description = "Returns paginated CEP query logs ordered by request timestamp descending"
+        summary = "List zip code queries with filters",
+        description = "Returns paginated zip code queries ordered by request timestamp descending"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Logs returned successfully"),
@@ -61,7 +61,7 @@ public class CepQueryLogController {
         @Parameter(description = "Page size", example = "10")
         @Min(value = 1, message = "size must be greater than or equal to 1")
         @RequestParam(defaultValue = "10") int size,
-        @Parameter(description = "CEP filter (with or without mask)", example = "04364030")
+        @Parameter(description = "Zip code filter (with or without mask)", example = "04364030")
         @RequestParam(required = false) String cep,
         @Parameter(description = "Query status filter", example = "SUCCESS")
         @RequestParam(required = false) CepQueryStatus status,
@@ -78,10 +78,10 @@ public class CepQueryLogController {
         return cepService.findAll(page, size, filter);
     }
 
-    @GetMapping("/cep-consultas/{externalId}")
+    @GetMapping("/zip-code-queries/{externalId}")
     @Operation(
-        summary = "Get CEP query log detail",
-        description = "Returns a CEP query log by its public external identifier."
+        summary = "Get zip code query by external id",
+        description = "Returns a zip code query by its public external identifier."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -101,7 +101,7 @@ public class CepQueryLogController {
         )
     })
     public CepQueryLogDetailResponseDTO findByExternalId(
-        @Parameter(description = "External public identifier of the CEP query log", example = "5dbf0be0-77ff-4c5d-a69f-d8452d58fbd2")
+        @Parameter(description = "External public identifier of the zip code query", example = "5dbf0be0-77ff-4c5d-a69f-d8452d58fbd2")
         @PathVariable UUID externalId
     ) {
         return cepService.findByExternalId(externalId);

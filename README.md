@@ -43,8 +43,8 @@ O projeto resolve um cenário comum de integração: manter previsibilidade em a
 
 ## Funcionalidades implementadas
 
-- Consulta de CEP: `GET /api/v1/ceps/{cep}`
-- Histórico com paginação e filtros: `GET /api/v1/cep-consultas`
+- Consulta de CEP: `GET /api/v1/zip-codes/{cep}`
+- Histórico com paginação e filtros: `GET /api/v1/zip-code-queries`
 - Registro de todas as consultas em banco
 - Filtros por `cep`, `status`, `provider`, `dateFrom`, `dateTo`
 - Interface web para busca e histórico
@@ -60,7 +60,7 @@ Observação: o frontend atual está em tema claro; alternância dark/light não
 
 Base local: `http://localhost:8080`
 
-### `GET /api/v1/ceps/{cep}`
+### `GET /api/v1/zip-codes/{cep}`
 
 Consulta um CEP no formato `99999999` ou `99999-999`.
 
@@ -70,8 +70,8 @@ Parâmetro de rota:
 Exemplos:
 
 ```bash
-curl -i http://localhost:8080/api/v1/ceps/04364030
-curl -i http://localhost:8080/api/v1/ceps/04364-030
+curl -i http://localhost:8080/api/v1/zip-codes/04364030
+curl -i http://localhost:8080/api/v1/zip-codes/04364-030
 ```
 
 Respostas esperadas:
@@ -80,7 +80,7 @@ Respostas esperadas:
 - `404 Not Found`: CEP não encontrado
 - `502 Bad Gateway`: falha em integração externa
 
-### `GET /api/v1/cep-consultas`
+### `GET /api/v1/zip-code-queries`
 
 Lista histórico de consultas com paginação e filtros.
 
@@ -96,15 +96,15 @@ Parâmetros de query:
 Exemplos:
 
 ```bash
-curl -G "http://localhost:8080/api/v1/cep-consultas"
+curl -G "http://localhost:8080/api/v1/zip-code-queries"
 
-curl -G "http://localhost:8080/api/v1/cep-consultas" \
+curl -G "http://localhost:8080/api/v1/zip-code-queries" \
   --data-urlencode "page=0" \
   --data-urlencode "size=5" \
   --data-urlencode "provider=WIREMOCK" \
   --data-urlencode "status=SUCCESS"
 
-curl -G "http://localhost:8080/api/v1/cep-consultas" \
+curl -G "http://localhost:8080/api/v1/zip-code-queries" \
   --data-urlencode "cep=04364030" \
   --data-urlencode "dateFrom=2026-04-01T00:00:00" \
   --data-urlencode "dateTo=2026-04-30T23:59:59"

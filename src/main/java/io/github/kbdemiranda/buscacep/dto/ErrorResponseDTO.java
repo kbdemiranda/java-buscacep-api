@@ -13,7 +13,7 @@ public record ErrorResponseDTO(
     String error,
     @Schema(description = "User-friendly error message", example = "CEP must have 8 digits or format 99999-999")
     String message,
-    @Schema(description = "Request path", example = "/api/v1/ceps/00000000")
+    @Schema(description = "Request path", example = "/api/v1/zip-codes/00000000")
     String path
 ) {
 }

@@ -126,7 +126,7 @@
         resultCard.classList.add("hidden");
 
         try {
-            const response = await fetch(`/api/v1/ceps/${encodeURIComponent(cep)}`);
+            const response = await fetch(`/api/v1/zip-codes/${encodeURIComponent(cep)}`);
             if (!response.ok) {
                 if (response.status === 404) {
                     throw new Error("CEP não encontrado");

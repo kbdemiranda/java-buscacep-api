@@ -279,7 +279,7 @@
             if (filters.status) params.set("status", filters.status);
             if (filters.dateFrom) params.set("dateFrom", toBackendDateTimeStart(filters.dateFrom));
             if (filters.dateTo) params.set("dateTo", toBackendDateTimeEnd(filters.dateTo));
-            const response = await fetch(`/api/v1/cep-consultas?${params.toString()}`);
+            const response = await fetch(`/api/v1/zip-code-queries?${params.toString()}`);
             if (!response.ok) {
                 throw new Error("Erro ao carregar histórico");
             }
@@ -300,7 +300,7 @@
     };
 
     const fetchDetailByExternalId = async (externalId) => {
-        const response = await fetch(`/api/v1/cep-consultas/${externalId}`);
+        const response = await fetch(`/api/v1/zip-code-queries/${externalId}`);
         if (!response.ok) {
             throw new Error("Erro ao carregar detalhes da consulta");
         }

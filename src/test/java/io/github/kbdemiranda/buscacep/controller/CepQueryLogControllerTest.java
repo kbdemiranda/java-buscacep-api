@@ -38,7 +38,7 @@ class CepQueryLogControllerTest {
     void shouldReturnPageMetadataForCustomPagination() throws Exception {
         when(cepService.findAll(eq(0), eq(10), any(CepQueryLogFilterDTO.class))).thenReturn(buildPageResponse(0, 10, 13, 2));
 
-        mockMvc.perform(get("/api/v1/cep-consultas?page=0&size=10"))
+        mockMvc.perform(get("/api/v1/zip-code-queries?page=0&size=10"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isArray())
             .andExpect(jsonPath("$.page").value(0))
@@ -51,7 +51,7 @@ class CepQueryLogControllerTest {
     void shouldReturnRequestedSizeWhenSizeIsFive() throws Exception {
         when(cepService.findAll(eq(0), eq(5), any(CepQueryLogFilterDTO.class))).thenReturn(buildPageResponse(0, 5, 13, 3));
 
-        mockMvc.perform(get("/api/v1/cep-consultas?page=0&size=5"))
+        mockMvc.perform(get("/api/v1/zip-code-queries?page=0&size=5"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.size").value(5));
     }
@@ -60,7 +60,7 @@ class CepQueryLogControllerTest {
     void shouldReturnRequestedPageWhenPageIsOne() throws Exception {
         when(cepService.findAll(eq(1), eq(5), any(CepQueryLogFilterDTO.class))).thenReturn(buildPageResponse(1, 5, 13, 3));
 
-        mockMvc.perform(get("/api/v1/cep-consultas?page=1&size=5"))
+        mockMvc.perform(get("/api/v1/zip-code-queries?page=1&size=5"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page").value(1));
     }
@@ -69,7 +69,7 @@ class CepQueryLogControllerTest {
     void shouldUseDefaultPaginationWhenParametersAreNotProvided() throws Exception {
         when(cepService.findAll(eq(0), eq(10), any(CepQueryLogFilterDTO.class))).thenReturn(buildPageResponse(0, 10, 13, 2));
 
-        mockMvc.perform(get("/api/v1/cep-consultas"))
+        mockMvc.perform(get("/api/v1/zip-code-queries"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page").value(0))
             .andExpect(jsonPath("$.size").value(10));
@@ -79,17 +79,17 @@ class CepQueryLogControllerTest {
 
     @Test
     void shouldReturn400WhenStatusParamIsInvalid() throws Exception {
-        mockMvc.perform(get("/api/v1/cep-consultas?status=DONE"))
+        mockMvc.perform(get("/api/v1/zip-code-queries?status=DONE"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.timestamp").exists())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.error").value("Bad Request"))
             .andExpect(jsonPath("$.message").value("Parâmetro inválido"))
-            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas"));
+            .andExpect(jsonPath("$.path").value("/api/v1/zip-code-queries"));
     }
 
     @Test
-    void shouldReturnDetailWhenExternalIdExists() throws Exception {
+    void shouldFindZipCodeQueryByExternalId() throws Exception {
         UUID externalId = UUID.randomUUID();
         when(cepService.findByExternalId(externalId)).thenReturn(
             CepQueryLogDetailResponseDTO.builder()
@@ -104,7 +104,7 @@ class CepQueryLogControllerTest {
                 .build()
         );
 
-        mockMvc.perform(get("/api/v1/cep-consultas/{externalId}", externalId))
+        mockMvc.perform(get("/api/v1/zip-code-queries/{externalId}", externalId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.externalId").value(externalId.toString()))
             .andExpect(jsonPath("$.cep").value("04364030"))
@@ -118,18 +118,18 @@ class CepQueryLogControllerTest {
         UUID externalId = UUID.randomUUID();
         when(cepService.findByExternalId(externalId)).thenThrow(new CepQueryLogNotFoundException(externalId));
 
-        mockMvc.perform(get("/api/v1/cep-consultas/{externalId}", externalId))
+        mockMvc.perform(get("/api/v1/zip-code-queries/{externalId}", externalId))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.message").value("Consulta de CEP não encontrada"))
-            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas/" + externalId));
+            .andExpect(jsonPath("$.path").value("/api/v1/zip-code-queries/" + externalId));
     }
 
     @Test
     void shouldReturn400WhenExternalIdIsInvalidUuid() throws Exception {
-        mockMvc.perform(get("/api/v1/cep-consultas/{externalId}", "not-a-uuid"))
+        mockMvc.perform(get("/api/v1/zip-code-queries/{externalId}", "not-a-uuid"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("Parâmetro inválido"))
-            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas/not-a-uuid"));
+            .andExpect(jsonPath("$.path").value("/api/v1/zip-code-queries/not-a-uuid"));
     }
 
     private static PageResponse<CepQueryLogResponseDTO> buildPageResponse(int page, int size, long totalElements, int totalPages) {

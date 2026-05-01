@@ -18,45 +18,45 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/ceps")
+@RequestMapping("/api/v1/zip-codes")
 @RequiredArgsConstructor
 @Validated
-@Tag(name = "CEPs", description = "Endpoints for CEP lookup")
+@Tag(name = "Zip Codes", description = "Endpoints for zip code lookup")
 public class CepController {
 
     private final CepService cepService;
 
     @GetMapping("/{cep}")
     @Operation(
-        summary = "Search CEP",
-        description = "Searches a CEP using WireMock first and ViaCEP as fallback. Each search is logged."
+        summary = "Search zip code",
+        description = "Searches a zip code using WireMock first and ViaCEP as fallback. Each search is logged."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "CEP found"),
+        @ApiResponse(responseCode = "200", description = "Zip code found"),
         @ApiResponse(
             responseCode = "400",
-            description = "Invalid CEP",
+            description = "Invalid zip code",
             content = @Content(schema = @Schema(implementation = io.github.kbdemiranda.buscacep.dto.ErrorResponseDTO.class))
         ),
         @ApiResponse(
             responseCode = "404",
-            description = "CEP not found",
+            description = "Zip code not found",
             content = @Content(schema = @Schema(implementation = io.github.kbdemiranda.buscacep.dto.ErrorResponseDTO.class))
         ),
         @ApiResponse(
             responseCode = "502",
-            description = "External provider failure",
+            description = "External provider error",
             content = @Content(schema = @Schema(implementation = io.github.kbdemiranda.buscacep.dto.ErrorResponseDTO.class))
         ),
         @ApiResponse(
             responseCode = "500",
-            description = "Internal server error",
+            description = "Unexpected internal server error",
             content = @Content(schema = @Schema(implementation = io.github.kbdemiranda.buscacep.dto.ErrorResponseDTO.class))
         )
     })
     public CepResponseDTO findByCep(
         @Parameter(
-            description = "CEP value (8 digits or formatted as 99999-999)",
+            description = "Zip code value (8 digits or formatted as 99999-999)",
             example = "04364-030"
         )
         @Pattern(regexp = "^\\d{8}$|^\\d{5}-\\d{3}$", message = "CEP must have 8 digits or format 99999-999")
