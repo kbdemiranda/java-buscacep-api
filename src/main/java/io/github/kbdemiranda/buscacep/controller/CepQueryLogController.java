@@ -1,6 +1,7 @@
 package io.github.kbdemiranda.buscacep.controller;
 
 import io.github.kbdemiranda.buscacep.dto.CepQueryLogResponseDTO;
+import io.github.kbdemiranda.buscacep.dto.CepQueryLogDetailResponseDTO;
 import io.github.kbdemiranda.buscacep.dto.ErrorResponseDTO;
 import io.github.kbdemiranda.buscacep.dto.CepQueryLogFilterDTO;
 import io.github.kbdemiranda.buscacep.dto.PageResponse;
@@ -8,6 +9,7 @@ import io.github.kbdemiranda.buscacep.model.CepProvider;
 import io.github.kbdemiranda.buscacep.model.CepQueryStatus;
 import io.github.kbdemiranda.buscacep.service.CepService;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -73,5 +76,34 @@ public class CepQueryLogController {
     ) {
         CepQueryLogFilterDTO filter = new CepQueryLogFilterDTO(cep, status, provider, dateFrom, dateTo);
         return cepService.findAll(page, size, filter);
+    }
+
+    @GetMapping("/cep-consultas/{externalId}")
+    @Operation(
+        summary = "Get CEP query log detail",
+        description = "Returns a CEP query log by its public external identifier."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Log returned successfully",
+            content = @Content(schema = @Schema(implementation = CepQueryLogDetailResponseDTO.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid UUID",
+            content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Log not found",
+            content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))
+        )
+    })
+    public CepQueryLogDetailResponseDTO findByExternalId(
+        @Parameter(description = "External public identifier of the CEP query log", example = "5dbf0be0-77ff-4c5d-a69f-d8452d58fbd2")
+        @PathVariable UUID externalId
+    ) {
+        return cepService.findByExternalId(externalId);
     }
 }

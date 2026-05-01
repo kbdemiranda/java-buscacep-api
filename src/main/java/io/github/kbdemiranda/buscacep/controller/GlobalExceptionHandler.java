@@ -2,6 +2,7 @@ package io.github.kbdemiranda.buscacep.controller;
 
 import io.github.kbdemiranda.buscacep.dto.ErrorResponseDTO;
 import io.github.kbdemiranda.buscacep.exception.CepNotFoundException;
+import io.github.kbdemiranda.buscacep.exception.CepQueryLogNotFoundException;
 import io.github.kbdemiranda.buscacep.exception.ExternalCepClientException;
 import io.github.kbdemiranda.buscacep.exception.InvalidCepException;
 import java.time.LocalDateTime;
@@ -25,6 +26,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CepNotFoundException.class)
     public ResponseEntity<ErrorResponseDTO> handleNotFound(CepNotFoundException e, HttpServletRequest request) {
         return buildResponse(HttpStatus.NOT_FOUND, "CEP não encontrado", request);
+    }
+
+    @ExceptionHandler(CepQueryLogNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleCepQueryLogNotFound(CepQueryLogNotFoundException e, HttpServletRequest request) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Consulta de CEP não encontrada", request);
     }
 
     @ExceptionHandler(InvalidCepException.class)

@@ -13,13 +13,16 @@ import io.github.kbdemiranda.buscacep.client.ViaCepClient;
 import io.github.kbdemiranda.buscacep.client.WiremockCepClient;
 import io.github.kbdemiranda.buscacep.dto.CepResponseDTO;
 import io.github.kbdemiranda.buscacep.exception.CepNotFoundException;
+import io.github.kbdemiranda.buscacep.exception.CepQueryLogNotFoundException;
 import io.github.kbdemiranda.buscacep.exception.ExternalCepClientException;
 import io.github.kbdemiranda.buscacep.exception.InvalidCepException;
 import io.github.kbdemiranda.buscacep.model.CepProvider;
 import io.github.kbdemiranda.buscacep.model.CepQueryLog;
 import io.github.kbdemiranda.buscacep.model.CepQueryStatus;
 import io.github.kbdemiranda.buscacep.repository.CepQueryLogRepository;
+import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -141,6 +144,38 @@ class CepServiceTest {
         assertThat(logCaptor.getValue().getStatus()).isEqualTo(CepQueryStatus.ERROR);
         assertThat(logCaptor.getValue().getProvider()).isEqualTo(CepProvider.VIACEP);
         assertThat(logCaptor.getValue().getErrorMessage()).isEqualTo("ViaCEP unavailable");
+    }
+
+    @Test
+    void shouldReturnDetailWhenExternalIdExists() {
+        UUID externalId = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.now();
+        CepQueryLog log = CepQueryLog.builder()
+            .externalId(externalId)
+            .cep("04364030")
+            .provider(CepProvider.WIREMOCK)
+            .status(CepQueryStatus.SUCCESS)
+            .requestTimestamp(now)
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
+        when(cepQueryLogRepository.findByExternalId(externalId)).thenReturn(Optional.of(log));
+
+        var result = cepService.findByExternalId(externalId);
+
+        assertThat(result.externalId()).isEqualTo(externalId);
+        assertThat(result.cep()).isEqualTo("04364030");
+        assertThat(result.provider()).isEqualTo("WIREMOCK");
+        assertThat(result.status()).isEqualTo("SUCCESS");
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenExternalIdDoesNotExist() {
+        UUID externalId = UUID.randomUUID();
+        when(cepQueryLogRepository.findByExternalId(externalId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> cepService.findByExternalId(externalId))
+            .isInstanceOf(CepQueryLogNotFoundException.class);
     }
 
     private static CepResponseDTO buildResponse(String cep) {

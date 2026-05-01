@@ -228,6 +228,10 @@
             <p><span class="font-medium">Provedor:</span> ${providerLabel(item.provider)}</p>
             <p><span class="font-medium">Status:</span> ${statusLabel(item.status)}</p>
             <p><span class="font-medium">Timestamp:</span> ${formatDate(item.requestTimestamp)}</p>
+            <p><span class="font-medium">External ID:</span> ${item.externalId ?? "-"}</p>
+            <p><span class="font-medium">Criado em:</span> ${formatDate(item.createdAt)}</p>
+            <p><span class="font-medium">Atualizado em:</span> ${formatDate(item.updatedAt)}</p>
+            <p class="sm:col-span-2"><span class="font-medium">Erro:</span> ${item.errorMessage ?? "-"}</p>
         `;
         currentJson = JSON.stringify(item, null, 2);
         jsonContent.textContent = currentJson;
@@ -295,11 +299,28 @@
         }
     };
 
-    historyBody.addEventListener("click", (event) => {
+    const fetchDetailByExternalId = async (externalId) => {
+        const response = await fetch(`/api/v1/cep-consultas/${externalId}`);
+        if (!response.ok) {
+            throw new Error("Erro ao carregar detalhes da consulta");
+        }
+        return response.json();
+    };
+
+    historyBody.addEventListener("click", async (event) => {
         const button = event.target.closest("button[data-index]");
         if (!button) return;
         const item = currentItems[Number(button.getAttribute("data-index"))];
         if (item) {
+            try {
+                if (item.externalId) {
+                    const detail = await fetchDetailByExternalId(item.externalId);
+                    openModal(detail);
+                    return;
+                }
+            } catch (_) {
+                // fallback to existing list payload to keep modal working
+            }
             openModal(item);
         }
     });

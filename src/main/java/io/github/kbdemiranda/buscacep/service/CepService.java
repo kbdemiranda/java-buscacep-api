@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.kbdemiranda.buscacep.client.ViaCepClient;
 import io.github.kbdemiranda.buscacep.client.WiremockCepClient;
 import io.github.kbdemiranda.buscacep.dto.CepQueryLogFilterDTO;
+import io.github.kbdemiranda.buscacep.dto.CepQueryLogDetailResponseDTO;
 import io.github.kbdemiranda.buscacep.dto.CepQueryLogResponseDTO;
 import io.github.kbdemiranda.buscacep.dto.CepResponseDTO;
 import io.github.kbdemiranda.buscacep.dto.PageResponse;
 import io.github.kbdemiranda.buscacep.exception.CepNotFoundException;
+import io.github.kbdemiranda.buscacep.exception.CepQueryLogNotFoundException;
 import io.github.kbdemiranda.buscacep.exception.ExternalCepClientException;
 import io.github.kbdemiranda.buscacep.exception.InvalidCepException;
 import io.github.kbdemiranda.buscacep.model.CepProvider;
@@ -18,6 +20,7 @@ import io.github.kbdemiranda.buscacep.repository.CepQueryLogRepository;
 import io.github.kbdemiranda.buscacep.repository.specification.CepQueryLogSpecification;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -74,6 +77,12 @@ public class CepService {
         );
     }
 
+    public CepQueryLogDetailResponseDTO findByExternalId(UUID externalId) {
+        CepQueryLog log = cepQueryLogRepository.findByExternalId(externalId)
+            .orElseThrow(() -> new CepQueryLogNotFoundException(externalId));
+        return toDetailResponseDTO(log);
+    }
+
     private String normalizeAndValidateCep(String rawCep) {
         String normalized = rawCep.replaceAll("\\D", "").trim();
         if (!normalized.matches("\\d{8}")) {
@@ -121,6 +130,20 @@ public class CepService {
             .provider(log.getProvider().name())
             .status(log.getStatus().name())
             .requestTimestamp(log.getRequestTimestamp())
+            .build();
+    }
+
+    private CepQueryLogDetailResponseDTO toDetailResponseDTO(CepQueryLog log) {
+        return CepQueryLogDetailResponseDTO.builder()
+            .externalId(log.getExternalId())
+            .cep(log.getCep())
+            .provider(log.getProvider().name())
+            .status(log.getStatus().name())
+            .requestTimestamp(log.getRequestTimestamp())
+            .responseBody(log.getResponseBody())
+            .errorMessage(log.getErrorMessage())
+            .createdAt(log.getCreatedAt())
+            .updatedAt(log.getUpdatedAt())
             .build();
     }
 }

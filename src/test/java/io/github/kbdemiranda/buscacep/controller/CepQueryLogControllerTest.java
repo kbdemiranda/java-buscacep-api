@@ -9,8 +9,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import io.github.kbdemiranda.buscacep.dto.CepQueryLogResponseDTO;
+import io.github.kbdemiranda.buscacep.dto.CepQueryLogDetailResponseDTO;
 import io.github.kbdemiranda.buscacep.dto.CepQueryLogFilterDTO;
 import io.github.kbdemiranda.buscacep.dto.PageResponse;
+import io.github.kbdemiranda.buscacep.exception.CepQueryLogNotFoundException;
 import io.github.kbdemiranda.buscacep.service.CepService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -84,6 +86,50 @@ class CepQueryLogControllerTest {
             .andExpect(jsonPath("$.error").value("Bad Request"))
             .andExpect(jsonPath("$.message").value("Parâmetro inválido"))
             .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas"));
+    }
+
+    @Test
+    void shouldReturnDetailWhenExternalIdExists() throws Exception {
+        UUID externalId = UUID.randomUUID();
+        when(cepService.findByExternalId(externalId)).thenReturn(
+            CepQueryLogDetailResponseDTO.builder()
+                .externalId(externalId)
+                .cep("04364030")
+                .provider("WIREMOCK")
+                .status("SUCCESS")
+                .requestTimestamp(LocalDateTime.of(2026, 4, 30, 15, 22, 0))
+                .errorMessage(null)
+                .createdAt(LocalDateTime.of(2026, 4, 30, 15, 22, 1))
+                .updatedAt(LocalDateTime.of(2026, 4, 30, 15, 22, 2))
+                .build()
+        );
+
+        mockMvc.perform(get("/api/v1/cep-consultas/{externalId}", externalId))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.externalId").value(externalId.toString()))
+            .andExpect(jsonPath("$.cep").value("04364030"))
+            .andExpect(jsonPath("$.provider").value("WIREMOCK"))
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.id").doesNotExist());
+    }
+
+    @Test
+    void shouldReturn404WhenExternalIdDoesNotExist() throws Exception {
+        UUID externalId = UUID.randomUUID();
+        when(cepService.findByExternalId(externalId)).thenThrow(new CepQueryLogNotFoundException(externalId));
+
+        mockMvc.perform(get("/api/v1/cep-consultas/{externalId}", externalId))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("Consulta de CEP não encontrada"))
+            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas/" + externalId));
+    }
+
+    @Test
+    void shouldReturn400WhenExternalIdIsInvalidUuid() throws Exception {
+        mockMvc.perform(get("/api/v1/cep-consultas/{externalId}", "not-a-uuid"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Parâmetro inválido"))
+            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas/not-a-uuid"));
     }
 
     private static PageResponse<CepQueryLogResponseDTO> buildPageResponse(int page, int size, long totalElements, int totalPages) {
