@@ -1,6 +1,7 @@
 package io.github.kbdemiranda.buscacep.controller;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -8,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import io.github.kbdemiranda.buscacep.dto.CepQueryLogResponseDTO;
+import io.github.kbdemiranda.buscacep.dto.CepQueryLogFilterDTO;
 import io.github.kbdemiranda.buscacep.dto.PageResponse;
 import io.github.kbdemiranda.buscacep.service.CepService;
 import java.time.LocalDateTime;
@@ -32,7 +34,7 @@ class CepQueryLogControllerTest {
 
     @Test
     void shouldReturnPageMetadataForCustomPagination() throws Exception {
-        when(cepService.findAll(0, 10)).thenReturn(buildPageResponse(0, 10, 13, 2));
+        when(cepService.findAll(eq(0), eq(10), any(CepQueryLogFilterDTO.class))).thenReturn(buildPageResponse(0, 10, 13, 2));
 
         mockMvc.perform(get("/api/v1/cep-consultas?page=0&size=10"))
             .andExpect(status().isOk())
@@ -45,7 +47,7 @@ class CepQueryLogControllerTest {
 
     @Test
     void shouldReturnRequestedSizeWhenSizeIsFive() throws Exception {
-        when(cepService.findAll(0, 5)).thenReturn(buildPageResponse(0, 5, 13, 3));
+        when(cepService.findAll(eq(0), eq(5), any(CepQueryLogFilterDTO.class))).thenReturn(buildPageResponse(0, 5, 13, 3));
 
         mockMvc.perform(get("/api/v1/cep-consultas?page=0&size=5"))
             .andExpect(status().isOk())
@@ -54,7 +56,7 @@ class CepQueryLogControllerTest {
 
     @Test
     void shouldReturnRequestedPageWhenPageIsOne() throws Exception {
-        when(cepService.findAll(1, 5)).thenReturn(buildPageResponse(1, 5, 13, 3));
+        when(cepService.findAll(eq(1), eq(5), any(CepQueryLogFilterDTO.class))).thenReturn(buildPageResponse(1, 5, 13, 3));
 
         mockMvc.perform(get("/api/v1/cep-consultas?page=1&size=5"))
             .andExpect(status().isOk())
@@ -63,14 +65,14 @@ class CepQueryLogControllerTest {
 
     @Test
     void shouldUseDefaultPaginationWhenParametersAreNotProvided() throws Exception {
-        when(cepService.findAll(0, 10)).thenReturn(buildPageResponse(0, 10, 13, 2));
+        when(cepService.findAll(eq(0), eq(10), any(CepQueryLogFilterDTO.class))).thenReturn(buildPageResponse(0, 10, 13, 2));
 
         mockMvc.perform(get("/api/v1/cep-consultas"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page").value(0))
             .andExpect(jsonPath("$.size").value(10));
 
-        verify(cepService).findAll(eq(0), eq(10));
+        verify(cepService).findAll(eq(0), eq(10), any(CepQueryLogFilterDTO.class));
     }
 
     private static PageResponse<CepQueryLogResponseDTO> buildPageResponse(int page, int size, long totalElements, int totalPages) {

@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class RestExceptionHandler {
@@ -46,6 +47,17 @@ public class RestExceptionHandler {
             .map(error -> error.getDefaultMessage() == null ? "Validation error" : error.getDefaultMessage())
             .collect(Collectors.joining("; "));
         return buildResponse(HttpStatus.BAD_REQUEST, message.isBlank() ? "Validation error" : message);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponseDTO> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        String message = "Invalid value for parameter '" + e.getName() + "'";
+        return buildResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponseDTO> handleIllegalArgument(IllegalArgumentException e) {
+        return buildResponse(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
     private ResponseEntity<ErrorResponseDTO> buildResponse(HttpStatus status, String message) {

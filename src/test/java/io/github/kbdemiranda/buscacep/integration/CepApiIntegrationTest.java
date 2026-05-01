@@ -184,6 +184,108 @@ class CepApiIntegrationTest {
             .andExpect(jsonPath("$.totalPages").value(2));
     }
 
+    @Test
+    void shouldFilterHistoryByCep() throws Exception {
+        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        when(wiremockCepClient.findByCep("01001000")).thenReturn(Optional.of(buildResponse("01001-000")));
+        performLookup("04364030");
+        performLookup("01001000");
+
+        mockMvc.perform(get("/api/v1/cep-consultas?cep=04364-030"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andExpect(jsonPath("$.content[0].cep").value("04364030"));
+    }
+
+    @Test
+    void shouldFilterHistoryByStatus() throws Exception {
+        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        when(wiremockCepClient.findByCep("00000000")).thenReturn(Optional.empty());
+        when(viaCepClient.findByCep("00000000")).thenReturn(Optional.empty());
+        performLookup("04364030");
+        mockMvc.perform(get("/api/v1/ceps/{cep}", "00000000"))
+            .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/v1/cep-consultas?status=NOT_FOUND"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andExpect(jsonPath("$.content[0].status").value("NOT_FOUND"));
+    }
+
+    @Test
+    void shouldFilterHistoryByProvider() throws Exception {
+        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        when(wiremockCepClient.findByCep("30140071")).thenReturn(Optional.empty());
+        when(viaCepClient.findByCep("30140071")).thenReturn(Optional.of(buildResponse("30140-071")));
+        performLookup("04364030");
+        performLookup("30140071");
+
+        mockMvc.perform(get("/api/v1/cep-consultas?provider=VIACEP"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andExpect(jsonPath("$.content[0].provider").value("VIACEP"));
+    }
+
+    @Test
+    void shouldFilterHistoryByDateRange() throws Exception {
+        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        performLookup("04364030");
+
+        mockMvc.perform(get("/api/v1/cep-consultas")
+                .param("dateFrom", "2000-01-01T00:00:00")
+                .param("dateTo", "2100-01-01T00:00:00"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(1));
+
+        mockMvc.perform(get("/api/v1/cep-consultas")
+                .param("dateFrom", "2100-01-01T00:00:00")
+                .param("dateTo", "2100-01-02T00:00:00"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(0));
+    }
+
+    @Test
+    void shouldFilterHistoryUsingCombinedFilters() throws Exception {
+        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        when(wiremockCepClient.findByCep("30140071")).thenReturn(Optional.empty());
+        when(viaCepClient.findByCep("30140071")).thenReturn(Optional.of(buildResponse("30140-071")));
+        performLookup("04364030");
+        performLookup("30140071");
+
+        mockMvc.perform(get("/api/v1/cep-consultas")
+                .param("cep", "30140-071")
+                .param("status", "SUCCESS")
+                .param("provider", "VIACEP")
+                .param("dateFrom", "2000-01-01T00:00:00")
+                .param("dateTo", "2100-01-01T00:00:00"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andExpect(jsonPath("$.content[0].cep").value("30140071"))
+            .andExpect(jsonPath("$.content[0].provider").value("VIACEP"))
+            .andExpect(jsonPath("$.content[0].status").value("SUCCESS"));
+    }
+
+    @Test
+    void shouldReturn400WhenDateRangeIsInvalid() throws Exception {
+        mockMvc.perform(get("/api/v1/cep-consultas")
+                .param("dateFrom", "2026-04-30T23:59:59")
+                .param("dateTo", "2026-04-01T00:00:00"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("dateFrom must be before or equal to dateTo"));
+    }
+
+    @Test
+    void shouldReturn400WhenStatusIsInvalid() throws Exception {
+        mockMvc.perform(get("/api/v1/cep-consultas").param("status", "DONE"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturn400WhenDateIsInvalid() throws Exception {
+        mockMvc.perform(get("/api/v1/cep-consultas").param("dateFrom", "2026-04-01"))
+            .andExpect(status().isBadRequest());
+    }
+
     private void performLookup(String cep) throws Exception {
         mockMvc.perform(get("/api/v1/ceps/{cep}", cep))
             .andExpect(status().isOk());

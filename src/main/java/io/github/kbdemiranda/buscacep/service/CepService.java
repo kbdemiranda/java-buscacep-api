@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.kbdemiranda.buscacep.client.ViaCepClient;
 import io.github.kbdemiranda.buscacep.client.WiremockCepClient;
+import io.github.kbdemiranda.buscacep.dto.CepQueryLogFilterDTO;
 import io.github.kbdemiranda.buscacep.dto.CepQueryLogResponseDTO;
 import io.github.kbdemiranda.buscacep.dto.CepResponseDTO;
 import io.github.kbdemiranda.buscacep.dto.PageResponse;
@@ -14,6 +15,7 @@ import io.github.kbdemiranda.buscacep.model.CepProvider;
 import io.github.kbdemiranda.buscacep.model.CepQueryLog;
 import io.github.kbdemiranda.buscacep.model.CepQueryStatus;
 import io.github.kbdemiranda.buscacep.repository.CepQueryLogRepository;
+import io.github.kbdemiranda.buscacep.repository.specification.CepQueryLogSpecification;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -58,9 +60,11 @@ public class CepService {
         }
     }
 
-    public PageResponse<CepQueryLogResponseDTO> findAll(int page, int size) {
+    public PageResponse<CepQueryLogResponseDTO> findAll(int page, int size, CepQueryLogFilterDTO filter) {
+        validateDateRange(filter);
         Pageable pageable = PageRequest.of(page, size, Sort.by("requestTimestamp").descending());
-        var pageResult = cepQueryLogRepository.findAll(pageable).map(this::toResponseDTO);
+        var spec = CepQueryLogSpecification.withFilters(filter);
+        var pageResult = cepQueryLogRepository.findAll(spec, pageable).map(this::toResponseDTO);
         return new PageResponse<>(
             pageResult.getContent(),
             pageResult.getNumber(),
@@ -71,11 +75,17 @@ public class CepService {
     }
 
     private String normalizeAndValidateCep(String rawCep) {
-        String normalized = rawCep.replace("-", "").trim();
+        String normalized = rawCep.replaceAll("\\D", "").trim();
         if (!normalized.matches("\\d{8}")) {
             throw new InvalidCepException(rawCep);
         }
         return normalized;
+    }
+
+    private void validateDateRange(CepQueryLogFilterDTO filter) {
+        if (filter.getDateFrom() != null && filter.getDateTo() != null && filter.getDateFrom().isAfter(filter.getDateTo())) {
+            throw new IllegalArgumentException("dateFrom must be before or equal to dateTo");
+        }
     }
 
     private void saveLog(
