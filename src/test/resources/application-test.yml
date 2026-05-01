@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: "jdbc:h2:mem:buscacep_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;INIT=CREATE DOMAIN IF NOT EXISTS JSONB AS JSON"
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+cep:
+  client:
+    wiremock-url: http://wiremock.test.local
+    viacep-url: http://viacep.test.local
