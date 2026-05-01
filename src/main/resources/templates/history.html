@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Consultas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex min-h-full flex-col bg-slate-200 text-slate-900">
+<nav class="border-b border-slate-300 bg-slate-100">
+    <div class="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5">
+        <a href="/" class="text-2xl font-black leading-none tracking-tight text-slate-900">BuscaCEP</a>
+        <div class="hidden items-center gap-8 text-sm text-slate-700 md:flex">
+            <a href="/" class="hover:text-slate-900">Buscar CEP</a>
+            <a href="/history" class="text-slate-900">Historico</a>
+            <a href="http://localhost:8080/swagger-ui.html" target="_blank" rel="noopener noreferrer" class="hover:text-slate-900">API Documentation</a>
+        </div>
+    </div>
+</nav>
+
+<main class="mx-auto w-full max-w-7xl flex-1 px-4 py-10">
+    <section class="rounded-2xl border border-slate-300 bg-slate-100 p-8">
+        <h1 class="mb-5 text-4xl font-bold tracking-tight">Histórico de Consultas</h1>
+        <form id="filtersForm" class="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <input id="cepFilter" type="text" placeholder="CEP" class="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+            <input id="providerFilter" type="text" placeholder="Provider" class="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+            <input id="statusFilter" type="text" placeholder="Status" class="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+            <input id="dateFromFilter" type="date" class="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+            <input id="dateToFilter" type="date" class="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+            <select id="sizeFilter" class="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-500">
+                <option value="5">5 por página</option>
+                <option value="10">10 por página</option>
+                <option value="20">20 por página</option>
+                <option value="50">50 por página</option>
+            </select>
+            <div class="md:col-span-3 flex items-center gap-2">
+                <button type="submit" class="rounded-md bg-indigo-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-800">Filtrar</button>
+                <button id="clearFiltersBtn" type="button" class="rounded-md border border-slate-300 px-4 py-2 text-sm transition hover:bg-slate-200">Limpar</button>
+            </div>
+        </form>
+        <p id="loading" class="mb-3 hidden text-sm text-slate-600">Carregando...</p>
+        <p id="error" class="mb-3 hidden rounded-lg bg-red-100 px-4 py-3 text-sm text-red-700"></p>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-sm">
+                <thead>
+                <tr class="border-b border-slate-300">
+                    <th class="py-3 pr-3">CEP</th>
+                    <th class="py-3 pr-3">Provider</th>
+                    <th class="py-3 pr-3">Status</th>
+                    <th class="py-3 pr-3">Data/Hora</th>
+                    <th class="py-3 text-right">Ação</th>
+                </tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+            </table>
+        </div>
+
+        <div class="mt-5 flex items-center justify-between">
+            <button id="prevBtn" type="button" class="rounded-md border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50">
+                Previous
+            </button>
+            <p id="pageInfo" class="text-sm text-slate-600"></p>
+            <button id="nextBtn" type="button" class="rounded-md border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50">
+                Next
+            </button>
+        </div>
+    </section>
+</main>
+
+<div id="detailsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
+    <div class="w-full max-w-2xl rounded-xl bg-slate-100 p-6 shadow-xl">
+        <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-lg font-semibold">Detalhes da Consulta</h2>
+            <button id="closeModalBtn" type="button" class="rounded-md border border-slate-300 px-3 py-1 text-sm transition hover:bg-slate-200">Fechar</button>
+        </div>
+        <div id="detailFields" class="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2"></div>
+        <div class="mt-4">
+            <div class="mb-2 flex items-center justify-between">
+                <p class="font-medium">Full JSON response</p>
+                <button id="copyJsonBtn" type="button" class="rounded-md bg-emerald-600 px-3 py-2 text-xs text-white transition hover:bg-emerald-700">
+                    Copiar JSON
+                </button>
+            </div>
+            <pre id="jsonContent" class="max-h-72 overflow-auto rounded-lg bg-slate-200 p-3 text-xs"></pre>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="fixed right-6 top-24 hidden rounded-lg border border-slate-300 bg-slate-100 px-5 py-3 text-sm text-slate-900 shadow-lg">
+    Copiado!
+</div>
+
+<footer class="border-t border-slate-300 py-4 text-sm text-slate-600">
+    <div class="mx-auto w-full max-w-7xl px-6 text-center">
+        <p>© 2026 BuscaCEP. Todos os direitos reservados - Desenvolvido por <a href="https://www.linkedin.com/in/kbdemiranda/" target="_blank" rel="noopener noreferrer" class="underline underline-offset-2">Kaique de Miranda</a></p>    </div>
+</footer>
+
+<script>
+    const loading = document.getElementById("loading");
+    const error = document.getElementById("error");
+    const filtersForm = document.getElementById("filtersForm");
+    const cepFilter = document.getElementById("cepFilter");
+    const providerFilter = document.getElementById("providerFilter");
+    const statusFilter = document.getElementById("statusFilter");
+    const dateFromFilter = document.getElementById("dateFromFilter");
+    const dateToFilter = document.getElementById("dateToFilter");
+    const sizeFilter = document.getElementById("sizeFilter");
+    const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+    const historyBody = document.getElementById("historyBody");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const pageInfo = document.getElementById("pageInfo");
+    const detailsModal = document.getElementById("detailsModal");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+    const detailFields = document.getElementById("detailFields");
+    const jsonContent = document.getElementById("jsonContent");
+    const copyJsonBtn = document.getElementById("copyJsonBtn");
+    const toast = document.getElementById("toast");
+
+    const query = new URLSearchParams(window.location.search);
+    let currentPage = Number(query.get("page") ?? 0);
+    if (Number.isNaN(currentPage) || currentPage < 0) currentPage = 0;
+    let pageSize = Number(query.get("size") ?? 5);
+    if (Number.isNaN(pageSize) || pageSize <= 0) pageSize = 5;
+    const filters = {
+        cep: query.get("cep") ?? "",
+        provider: query.get("provider") ?? "",
+        status: query.get("status") ?? "",
+        dateFrom: query.get("dateFrom") ?? "",
+        dateTo: query.get("dateTo") ?? ""
+    };
+    let currentItems = [];
+    let currentJson = "{}";
+
+    cepFilter.value = filters.cep;
+    providerFilter.value = filters.provider;
+    statusFilter.value = filters.status;
+    dateFromFilter.value = filters.dateFrom;
+    dateToFilter.value = filters.dateTo;
+    if ([5, 10, 20, 50].includes(pageSize)) {
+        sizeFilter.value = String(pageSize);
+    } else {
+        pageSize = 5;
+        sizeFilter.value = "5";
+    }
+
+    const showToast = () => {
+        toast.classList.remove("hidden");
+        setTimeout(() => toast.classList.add("hidden"), 1500);
+    };
+
+    const formatDate = (value) => {
+        if (!value) return "-";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return value;
+        return d.toLocaleString("pt-BR");
+    };
+
+    const setLoading = (isLoading) => {
+        loading.classList.toggle("hidden", !isLoading);
+    };
+
+    const updateUrl = () => {
+        const params = new URLSearchParams();
+        params.set("page", String(currentPage));
+        params.set("size", String(pageSize));
+        if (filters.cep) params.set("cep", filters.cep);
+        if (filters.provider) params.set("provider", filters.provider);
+        if (filters.status) params.set("status", filters.status);
+        if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
+        if (filters.dateTo) params.set("dateTo", filters.dateTo);
+        history.replaceState(null, "", `/history?${params.toString()}`);
+    };
+
+    const openModal = (item) => {
+        detailFields.innerHTML = `
+            <p><span class="font-medium">CEP:</span> ${item.cep ?? "-"}</p>
+            <p><span class="font-medium">Provider:</span> ${item.provider ?? "-"}</p>
+            <p><span class="font-medium">Status:</span> ${item.status ?? "-"}</p>
+            <p><span class="font-medium">Timestamp:</span> ${formatDate(item.requestTimestamp)}</p>
+        `;
+        currentJson = JSON.stringify(item, null, 2);
+        jsonContent.textContent = currentJson;
+        detailsModal.classList.remove("hidden");
+        detailsModal.classList.add("flex");
+    };
+
+    const closeModal = () => {
+        detailsModal.classList.add("hidden");
+        detailsModal.classList.remove("flex");
+    };
+
+    const renderRows = () => {
+        if (!currentItems.length) {
+            historyBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="py-4 text-center text-slate-500">Sem registros</td>
+                </tr>
+            `;
+            return;
+        }
+        historyBody.innerHTML = currentItems.map((item, index) => `
+            <tr class="border-b border-slate-300 transition hover:bg-slate-200">
+                <td class="py-3 pr-3">${item.cep ?? "-"}</td>
+                <td class="py-3 pr-3">${item.provider ?? "-"}</td>
+                <td class="py-3 pr-3">${item.status ?? "-"}</td>
+                <td class="py-3 pr-3">${formatDate(item.requestTimestamp)}</td>
+                <td class="py-3 text-right">
+                    <button type="button" data-index="${index}" class="rounded-md border border-slate-300 px-2 py-1 text-xs transition hover:bg-slate-200">Ver detalhes</button>
+                </td>
+            </tr>
+        `).join("");
+    };
+
+    const loadPage = async () => {
+        setLoading(true);
+        error.classList.add("hidden");
+        updateUrl();
+        try {
+            const params = new URLSearchParams();
+            params.set("page", String(currentPage));
+            params.set("size", String(pageSize));
+            if (filters.cep) params.set("cep", filters.cep);
+            if (filters.provider) params.set("provider", filters.provider);
+            if (filters.status) params.set("status", filters.status);
+            if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
+            if (filters.dateTo) params.set("dateTo", filters.dateTo);
+            const response = await fetch(`/api/v1/cep-consultas?${params.toString()}`);
+            if (!response.ok) {
+                throw new Error("Erro ao carregar histórico");
+            }
+            const data = await response.json();
+            currentItems = data.content || [];
+            renderRows();
+            const totalPages = data.totalPages ?? 0;
+            pageInfo.textContent = `Página ${data.page + 1} de ${Math.max(totalPages, 1)}`;
+            prevBtn.disabled = currentPage <= 0;
+            nextBtn.disabled = totalPages === 0 || currentPage >= totalPages - 1;
+        } catch (e) {
+            error.textContent = e.message || "Erro inesperado";
+            error.classList.remove("hidden");
+            historyBody.innerHTML = "";
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    historyBody.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-index]");
+        if (!button) return;
+        const item = currentItems[Number(button.getAttribute("data-index"))];
+        if (item) {
+            openModal(item);
+        }
+    });
+
+    prevBtn.addEventListener("click", async () => {
+        if (currentPage <= 0) return;
+        currentPage -= 1;
+        await loadPage();
+    });
+
+    nextBtn.addEventListener("click", async () => {
+        currentPage += 1;
+        await loadPage();
+    });
+
+    filtersForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        filters.cep = cepFilter.value.trim();
+        filters.provider = providerFilter.value.trim();
+        filters.status = statusFilter.value.trim();
+        filters.dateFrom = dateFromFilter.value;
+        filters.dateTo = dateToFilter.value;
+        pageSize = Number(sizeFilter.value) || 5;
+        currentPage = 0;
+        await loadPage();
+    });
+
+    sizeFilter.addEventListener("change", async () => {
+        pageSize = Number(sizeFilter.value) || 5;
+        currentPage = 0;
+        await loadPage();
+    });
+
+    clearFiltersBtn.addEventListener("click", async () => {
+        filters.cep = "";
+        filters.provider = "";
+        filters.status = "";
+        filters.dateFrom = "";
+        filters.dateTo = "";
+        cepFilter.value = "";
+        providerFilter.value = "";
+        statusFilter.value = "";
+        dateFromFilter.value = "";
+        dateToFilter.value = "";
+        pageSize = 5;
+        sizeFilter.value = "5";
+        currentPage = 0;
+        await loadPage();
+    });
+
+    closeModalBtn.addEventListener("click", closeModal);
+    detailsModal.addEventListener("click", (event) => {
+        if (event.target === detailsModal) {
+            closeModal();
+        }
+    });
+
+    copyJsonBtn.addEventListener("click", async () => {
+        await navigator.clipboard.writeText(currentJson);
+        showToast();
+    });
+
+    loadPage();
+</script>
+</body>
+</html>

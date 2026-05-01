@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busca de CEP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex min-h-full flex-col bg-slate-200 text-slate-900">
+<nav class="border-b border-slate-300 bg-slate-100">
+    <div class="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5">
+        <a href="/" class="text-2xl font-black leading-none tracking-tight text-slate-900">BuscaCEP</a>
+        <div class="hidden items-center gap-8 text-sm text-slate-700 md:flex">
+            <a href="/" class="hover:text-slate-900">Buscar CEP</a>
+            <a href="/history" class="hover:text-slate-900">Historico</a>
+            <a href="http://localhost:8080/swagger-ui.html" target="_blank" rel="noopener noreferrer" class="hover:text-slate-900">API Documentation</a>
+        </div>
+    </div>
+</nav>
+
+<main id="mainContent" class="mx-auto flex w-full max-w-7xl flex-1 items-center justify-center px-4 py-6">
+    <section class="w-full max-w-4xl rounded-2xl border border-slate-300 bg-slate-100 p-6">
+        <p class="mb-5 text-lg text-slate-700">Digite um CEP para buscar o endereço de forma rápida e precisa.</p>
+
+        <form id="cepForm" class="flex flex-col gap-3 sm:flex-row">
+            <input
+                id="cepInput"
+                type="text"
+                placeholder="00000000"
+                class="w-full rounded-xl border border-slate-400 bg-slate-50 px-5 py-3 text-base outline-none transition focus:border-indigo-500"
+                maxlength="9"
+                required
+            />
+            <button type="submit" class="rounded-xl bg-indigo-700 px-8 py-3 text-base font-medium text-white transition hover:bg-indigo-800">
+                Buscar
+            </button>
+        </form>
+
+        <p id="loading" class="mt-4 hidden text-sm text-slate-600">Buscando...</p>
+        <p id="error" class="mt-4 hidden rounded-lg bg-red-100 px-4 py-3 text-sm text-red-700"></p>
+
+        <div id="resultCard" class="mt-5 hidden rounded-xl border border-slate-300 bg-slate-50">
+            <div class="mb-2 flex items-center justify-end p-4">
+                <button id="copyAllBtn" type="button" class="rounded-xl border border-slate-400 px-5 py-2 text-base text-indigo-700 transition hover:bg-slate-200">
+                    Copiar Tudo
+                </button>
+            </div>
+
+            <div class="overflow-x-auto px-4 pb-4">
+                <table class="w-full text-left text-sm">
+                    <tbody id="resultBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div id="toast" class="fixed right-6 top-24 hidden rounded-lg border border-slate-300 bg-slate-100 px-5 py-3 text-sm text-slate-900 shadow-lg">
+    Copiado!
+</div>
+
+<footer class="border-t border-slate-300 py-4 text-sm text-slate-600">
+    <div class="mx-auto w-full max-w-7xl px-6 text-center">
+        <p>© 2026 BuscaCEP. Todos os direitos reservados - Desenvolvido por <a href="https://www.linkedin.com/in/kbdemiranda/" target="_blank" rel="noopener noreferrer" class="underline underline-offset-2">Kaique de Miranda</a></p>
+    </div>
+</footer>
+
+<script>
+    const cepForm = document.getElementById("cepForm");
+    const cepInput = document.getElementById("cepInput");
+    const mainContent = document.getElementById("mainContent");
+    const loading = document.getElementById("loading");
+    const error = document.getElementById("error");
+    const resultCard = document.getElementById("resultCard");
+    const resultBody = document.getElementById("resultBody");
+    const copyAllBtn = document.getElementById("copyAllBtn");
+    const toast = document.getElementById("toast");
+
+    let latestResult = null;
+
+    const showToast = () => {
+        toast.classList.remove("hidden");
+        setTimeout(() => toast.classList.add("hidden"), 1500);
+    };
+
+    const copyText = async (text) => {
+        await navigator.clipboard.writeText(text);
+        showToast();
+    };
+
+    const pinContentToTop = () => {
+        mainContent.classList.remove("items-center");
+        mainContent.classList.add("items-start");
+    };
+
+    const makeRow = (label, value, copyValue) => {
+        const safeValue = value ?? "-";
+        const safeCopyValue = copyValue ?? safeValue;
+        return `
+            <tr class="border-b border-slate-300 last:border-b-0">
+                <th class="py-4 pr-2 text-base font-medium">${label}</th>
+                <td class="py-4 pr-2 text-lg">${safeValue}</td>
+                <td class="py-3 text-right">
+                    <button
+                        type="button"
+                        class="rounded-md border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-200"
+                        data-copy="${String(safeCopyValue).replace(/"/g, "&quot;")}"
+                    >Copiar</button>
+                </td>
+            </tr>
+        `;
+    };
+
+    const formatCep = (value) => {
+        const digits = String(value ?? "").replace(/\D/g, "");
+        if (digits.length !== 8) return value ?? "-";
+        return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+    };
+
+    cepForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const cep = cepInput.value.trim();
+
+        loading.classList.remove("hidden");
+        error.classList.add("hidden");
+        resultCard.classList.add("hidden");
+
+        try {
+            const response = await fetch(`/api/v1/ceps/${encodeURIComponent(cep)}`);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error("CEP não encontrado");
+                }
+                if (response.status === 400) {
+                    throw new Error("CEP inválido");
+                }
+                throw new Error("Erro ao consultar CEP");
+            }
+
+            const data = await response.json();
+            latestResult = data;
+            const cepDigits = String(data.cep ?? "").replace(/\D/g, "");
+            const formattedCep = formatCep(data.cep);
+
+            resultBody.innerHTML = [
+                makeRow("CEP", formattedCep, cepDigits || "-"),
+                makeRow("Logradouro", data.logradouro),
+                makeRow("Bairro", data.bairro),
+                makeRow("Cidade", data.localidade),
+                makeRow("Estado", data.uf)
+            ].join("");
+
+            resultCard.classList.remove("hidden");
+            pinContentToTop();
+        } catch (e) {
+            error.textContent = e.message || "Erro inesperado";
+            error.classList.remove("hidden");
+            pinContentToTop();
+        } finally {
+            loading.classList.add("hidden");
+        }
+    });
+
+    resultBody.addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-copy]");
+        if (!button) {
+            return;
+        }
+        await copyText(button.getAttribute("data-copy") || "");
+    });
+
+    copyAllBtn.addEventListener("click", async () => {
+        if (!latestResult) {
+            return;
+        }
+        const normalize = (value) => {
+            const textValue = value == null ? "" : String(value).trim();
+            return textValue;
+        };
+        const parts = [
+            normalize(latestResult.logradouro),
+            normalize(latestResult.bairro),
+            normalize(latestResult.localidade),
+            normalize(latestResult.uf)
+        ].filter(Boolean);
+        const address = parts.join(", ");
+        const cep = normalize(latestResult.cep);
+        const text = cep ? (address ? `${address} - ${cep}` : cep) : address;
+        await copyText(text);
+    });
+</script>
+</body>
+</html>
