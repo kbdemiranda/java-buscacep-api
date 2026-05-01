@@ -23,7 +23,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = CepQueryLogController.class)
-@Import(RestExceptionHandler.class)
+@Import(GlobalExceptionHandler.class)
 class CepQueryLogControllerTest {
 
     @Autowired
@@ -73,6 +73,17 @@ class CepQueryLogControllerTest {
             .andExpect(jsonPath("$.size").value(10));
 
         verify(cepService).findAll(eq(0), eq(10), any(CepQueryLogFilterDTO.class));
+    }
+
+    @Test
+    void shouldReturn400WhenStatusParamIsInvalid() throws Exception {
+        mockMvc.perform(get("/api/v1/cep-consultas?status=DONE"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.timestamp").exists())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.error").value("Bad Request"))
+            .andExpect(jsonPath("$.message").value("Parâmetro inválido"))
+            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas"));
     }
 
     private static PageResponse<CepQueryLogResponseDTO> buildPageResponse(int page, int size, long totalElements, int totalPages) {

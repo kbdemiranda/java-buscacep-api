@@ -103,7 +103,11 @@ class CepApiIntegrationTest {
 
         mockMvc.perform(get("/api/v1/ceps/{cep}", "00000000"))
             .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.message").value("CEP não encontrado"));
+            .andExpect(jsonPath("$.timestamp").exists())
+            .andExpect(jsonPath("$.status").value(404))
+            .andExpect(jsonPath("$.error").value("Not Found"))
+            .andExpect(jsonPath("$.message").value("CEP não encontrado"))
+            .andExpect(jsonPath("$.path").value("/api/v1/ceps/00000000"));
 
         assertThat(cepQueryLogRepository.count()).isEqualTo(1);
         var log = cepQueryLogRepository.findAll().getFirst();
@@ -113,7 +117,12 @@ class CepApiIntegrationTest {
     @Test
     void shouldReturn400AndNotCallClientsForInvalidCep() throws Exception {
         mockMvc.perform(get("/api/v1/ceps/{cep}", "123"))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.timestamp").exists())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.error").value("Bad Request"))
+            .andExpect(jsonPath("$.message").exists())
+            .andExpect(jsonPath("$.path").value("/api/v1/ceps/123"));
 
         verify(wiremockCepClient, never()).findByCep(org.mockito.ArgumentMatchers.anyString());
         verify(viaCepClient, never()).findByCep(org.mockito.ArgumentMatchers.anyString());
@@ -271,19 +280,44 @@ class CepApiIntegrationTest {
                 .param("dateFrom", "2026-04-30T23:59:59")
                 .param("dateTo", "2026-04-01T00:00:00"))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.message").value("dateFrom must be before or equal to dateTo"));
+            .andExpect(jsonPath("$.timestamp").exists())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.error").value("Bad Request"))
+            .andExpect(jsonPath("$.message").value("dateFrom must be before or equal to dateTo"))
+            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas"));
     }
 
     @Test
     void shouldReturn400WhenStatusIsInvalid() throws Exception {
         mockMvc.perform(get("/api/v1/cep-consultas").param("status", "DONE"))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.timestamp").exists())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.error").value("Bad Request"))
+            .andExpect(jsonPath("$.message").value("Parâmetro inválido"))
+            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas"));
+    }
+
+    @Test
+    void shouldReturn400WhenProviderIsInvalid() throws Exception {
+        mockMvc.perform(get("/api/v1/cep-consultas").param("provider", "ABC"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.timestamp").exists())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.error").value("Bad Request"))
+            .andExpect(jsonPath("$.message").value("Parâmetro inválido"))
+            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas"));
     }
 
     @Test
     void shouldReturn400WhenDateIsInvalid() throws Exception {
         mockMvc.perform(get("/api/v1/cep-consultas").param("dateFrom", "2026-04-01"))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.timestamp").exists())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.error").value("Bad Request"))
+            .andExpect(jsonPath("$.message").value("Parâmetro inválido"))
+            .andExpect(jsonPath("$.path").value("/api/v1/cep-consultas"));
     }
 
     private void performLookup(String cep) throws Exception {

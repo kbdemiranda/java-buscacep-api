@@ -44,6 +44,11 @@ public class CepController {
             content = @Content(schema = @Schema(implementation = io.github.kbdemiranda.buscacep.dto.ErrorResponseDTO.class))
         ),
         @ApiResponse(
+            responseCode = "502",
+            description = "External provider failure",
+            content = @Content(schema = @Schema(implementation = io.github.kbdemiranda.buscacep.dto.ErrorResponseDTO.class))
+        ),
+        @ApiResponse(
             responseCode = "500",
             description = "Internal server error",
             content = @Content(schema = @Schema(implementation = io.github.kbdemiranda.buscacep.dto.ErrorResponseDTO.class))
