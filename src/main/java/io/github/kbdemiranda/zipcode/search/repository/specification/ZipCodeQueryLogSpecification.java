@@ -15,20 +15,20 @@ public final class ZipCodeQueryLogSpecification {
         return (root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
 
-            if (filter.getZipCode() != null && !filter.getZipCode().isBlank()) {
-                predicates.add(cb.equal(root.get("zipCode"), filter.getZipCode()));
+            if (filter.zipCode() != null && !filter.zipCode().isBlank()) {
+                predicates.add(cb.equal(root.get("zipCode"), filter.zipCode()));
             }
-            if (filter.getStatus() != null) {
-                predicates.add(cb.equal(root.get("status"), filter.getStatus()));
+            if (filter.status() != null) {
+                predicates.add(cb.equal(root.get("status"), filter.status()));
             }
-            if (filter.getProvider() != null) {
-                predicates.add(cb.equal(root.get("provider"), filter.getProvider()));
+            if (filter.provider() != null) {
+                predicates.add(cb.equal(root.get("provider"), filter.provider()));
             }
-            if (filter.getDateFrom() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("requestTimestamp"), filter.getDateFrom()));
+            if (filter.dateFrom() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("requestTimestamp"), filter.dateFrom()));
             }
-            if (filter.getDateTo() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("requestTimestamp"), filter.getDateTo()));
+            if (filter.dateTo() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("requestTimestamp"), filter.dateTo()));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

@@ -93,7 +93,7 @@ public class ZipCodeService {
     }
 
     private void validateDateRange(ZipCodeQueryLogFilterDTO filter) {
-        if (filter.getDateFrom() != null && filter.getDateTo() != null && filter.getDateFrom().isAfter(filter.getDateTo())) {
+        if (filter.dateFrom() != null && filter.dateTo() != null && filter.dateFrom().isAfter(filter.dateTo())) {
             throw new IllegalArgumentException("dateFrom must be before or equal to dateTo");
         }
     }
