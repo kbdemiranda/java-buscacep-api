@@ -1,4 +1,4 @@
-# Busca CEP API
+# Zip Code Search API
 
 Aplicação para consulta de CEP com Spring Boot 4 e Java 21, composta por API REST e interface web com Thymeleaf. O fluxo prioriza uma fonte local mockada (WireMock), usa ViaCEP como fallback e registra todas as consultas para auditoria.
 
@@ -183,7 +183,7 @@ docker compose down -v
 │   └── mappings/
 ├── src/
 │   ├── main/
-│   │   ├── java/io/github/kbdemiranda/buscacep/
+│   │   ├── java/io/github/kbdemiranda/zipcode/search/
 │   │   │   ├── client/
 │   │   │   ├── config/
 │   │   │   ├── controller/
@@ -197,7 +197,7 @@ docker compose down -v
 │   │       ├── db/migration/
 │   │       └── templates/
 │   └── test/
-│       └── java/io/github/kbdemiranda/buscacep/
+│       └── java/io/github/kbdemiranda/zipcode/search/
 └── pom.xml
 ```
 

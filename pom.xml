@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>io.github.kbdemiranda</groupId>
-    <artifactId>buscacep</artifactId>
+    <artifactId>zip-code-search-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>java-buscacep-api</name>
-    <description>java-buscacep-api</description>
+    <name>zip-code-search-api</name>
+    <description>API for Brazilian ZIP code lookup with query history</description>
     <url/>
     <licenses>
         <license/>

@@ -27,6 +27,8 @@ services:
 
   # Spring Boot API
   app:
+    image: zip-code-search-api:latest
+    container_name: zip-code-search-api
     build:
       context: .
       dockerfile: Dockerfile

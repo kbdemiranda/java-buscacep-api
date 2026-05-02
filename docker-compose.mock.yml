@@ -1,7 +1,7 @@
 services:
   mock-cep:
     image: wiremock/wiremock:3.13.1
-    container_name: buscacep-mock-cep
+    container_name: zip-code-search-api-mock-cep
     ports:
       - "8089:8080"
     command:

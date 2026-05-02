@@ -1,6 +1,6 @@
 spring:
   application:
-    name: java-buscacep-api
+    name: zip-code-search-api
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:45432/buscacep}
     username: ${SPRING_DATASOURCE_USERNAME:buscacep}
