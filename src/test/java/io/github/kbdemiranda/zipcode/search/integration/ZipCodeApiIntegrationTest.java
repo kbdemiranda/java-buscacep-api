@@ -201,7 +201,7 @@ class ZipCodeApiIntegrationTest {
         performLookup("04364030");
         performLookup("01001000");
 
-        mockMvc.perform(get("/api/v1/zip-code-queries?cep=04364-030"))
+        mockMvc.perform(get("/api/v1/zip-code-queries?zipCode=04364-030"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content.length()").value(1))
             .andExpect(jsonPath("$.content[0].cep").value("04364030"));
@@ -263,7 +263,7 @@ class ZipCodeApiIntegrationTest {
         performLookup("30140071");
 
         mockMvc.perform(get("/api/v1/zip-code-queries")
-                .param("cep", "30140-071")
+                .param("zipCode", "30140-071")
                 .param("status", "SUCCESS")
                 .param("provider", "VIACEP")
                 .param("dateFrom", "2000-01-01T00:00:00")
