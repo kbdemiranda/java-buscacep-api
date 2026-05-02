@@ -1,177 +1,167 @@
 # Zip Code Search API
 
-Aplicação para consulta de CEP com Spring Boot 4 e Java 21, composta por API REST e interface web com Thymeleaf. O fluxo prioriza uma fonte local mockada (WireMock), usa ViaCEP como fallback e registra todas as consultas para auditoria.
+REST API and Thymeleaf frontend for Brazilian zip code lookup. The application queries WireMock first, falls back to ViaCEP when needed, and persists every query result for traceability.
 
-## Visão geral
+## Overview
 
-O projeto resolve um cenário comum de integração: manter previsibilidade em ambiente local sem abrir mão de uma fonte externa real. Para isso:
+Lookup flow:
 
-- consulta primeiro o WireMock;
-- se não encontrar, tenta o ViaCEP;
-- persiste o resultado da consulta (sucesso, não encontrado ou erro) no PostgreSQL.
+1. Search in WireMock (primary provider).
+2. If not found, search in ViaCEP (fallback provider).
+3. Persist the query result (success, not found, or error) in PostgreSQL.
 
-## Demonstração
+This strategy provides deterministic local behavior for development and testing while still supporting real external lookups.
 
-### Busca de CEP
-<!-- TODO: Adicionar GIF da tela de busca aqui -->
+## Demo
 
-### Histórico de Consultas
-<!-- TODO: Adicionar GIF da tela de histórico aqui -->
+### Zip Code Search
+![SearchZip.gif](demo/SearchZip.gif)
 
-## Diagramas
+### Query History
+![history.gif](demo/history.gif)
 
-### Arquitetura geral
-<!-- TODO: Adicionar diagrama Mermaid da arquitetura geral aqui -->
+## Architecture
 
-### Fluxo de consulta
-<!-- TODO: Adicionar diagrama Mermaid de sequência aqui -->
+### High-level architecture
+![architecture.png](diagram/architecture.png)
 
-## Tecnologias utilizadas
+### Search flow
+![search_flow.png](diagram/search_flow.png)
+
+## Tech Stack
 
 - Java 21
 - Spring Boot 4
-- Spring Web MVC
+- Spring Web
 - Spring Data JPA
 - Flyway
 - PostgreSQL
 - Docker / Docker Compose
 - WireMock
+- ViaCEP
 - Thymeleaf
 - Tailwind CSS
-- springdoc-openapi (Swagger)
-- JUnit e Mockito (via `spring-boot-starter-test`)
+- Swagger (`springdoc-openapi`)
+- JUnit / Mockito / H2
 
-## Funcionalidades implementadas
+## Features
 
-- Consulta de CEP: `GET /api/v1/zip-codes/{cep}`
-- Histórico com paginação e filtros: `GET /api/v1/zip-code-queries`
-- Registro de todas as consultas em banco
-- Filtros por `cep`, `status`, `provider`, `dateFrom`, `dateTo`
-- Interface web para busca e histórico
-- Ações de cópia na interface:
-  - cópia de campo individual
-  - cópia do endereço consolidado
-  - cópia do JSON no modal de detalhes do histórico
-- Documentação Swagger/OpenAPI em `/swagger-ui.html`
+- Zip code search
+- WireMock as primary provider
+- ViaCEP fallback
+- Query logging
+- Pagination and filtering
+- Frontend UI
+- Copy actions
+- Swagger documentation
 
-Observação: o frontend atual está em tema claro; alternância dark/light não está implementada no código neste momento.
+## API Endpoints
 
-## Endpoints da API
+Base URL: `http://localhost:8080`
 
-Base local: `http://localhost:8080`
+### GET /api/v1/zip-codes/{cep}
 
-### `GET /api/v1/zip-codes/{cep}`
-
-Consulta um CEP no formato `99999999` ou `99999-999`.
-
-Parâmetro de rota:
-- `cep` (obrigatório): CEP com 8 dígitos, com ou sem máscara.
-
-Exemplos:
+- Accepts formatted and unformatted zip codes (`99999-999` or `99999999`)
+- Responses: `200`, `400`, `404`, `502`
 
 ```bash
-curl -i http://localhost:8080/api/v1/zip-codes/04364030
-curl -i http://localhost:8080/api/v1/zip-codes/04364-030
+curl http://localhost:8080/api/v1/zip-codes/04730090
 ```
 
-Respostas esperadas:
-- `200 OK`: CEP encontrado
-- `400 Bad Request`: CEP inválido
-- `404 Not Found`: CEP não encontrado
-- `502 Bad Gateway`: falha em integração externa
+Example `200 OK` response:
 
-### `GET /api/v1/zip-code-queries`
+```json
+{
+  "cep": "04730-090",
+  "logradouro": "Avenida das Nações Unidas",
+  "complemento": "de 1000 a 1598 - lado par",
+  "bairro": "Várzea de Baixo",
+  "localidade": "Sao Paulo",
+  "uf": "SP"
+}
+```
 
-Lista histórico de consultas com paginação e filtros.
+### GET /api/v1/zip-code-queries
 
-Parâmetros de query:
-- `page` (opcional, padrão `0`)
-- `size` (opcional, padrão `10`)
-- `cep` (opcional)
-- `status` (opcional): `SUCCESS`, `NOT_FOUND`, `ERROR`
-- `provider` (opcional): `WIREMOCK`, `VIACEP`
-- `dateFrom` (opcional, ISO-8601): ex. `2026-04-01T00:00:00`
-- `dateTo` (opcional, ISO-8601): ex. `2026-04-30T23:59:59`
-
-Exemplos:
+- Supports pagination (`page`, `size`)
+- Supports filters:
+  - `cep`
+  - `status`
+  - `provider`
+  - `dateFrom`
+  - `dateTo`
 
 ```bash
-curl -G "http://localhost:8080/api/v1/zip-code-queries"
-
 curl -G "http://localhost:8080/api/v1/zip-code-queries" \
   --data-urlencode "page=0" \
-  --data-urlencode "size=5" \
+  --data-urlencode "size=10" \
   --data-urlencode "provider=WIREMOCK" \
-  --data-urlencode "status=SUCCESS"
-
-curl -G "http://localhost:8080/api/v1/zip-code-queries" \
-  --data-urlencode "cep=04364030" \
+  --data-urlencode "status=SUCCESS" \
   --data-urlencode "dateFrom=2026-04-01T00:00:00" \
   --data-urlencode "dateTo=2026-04-30T23:59:59"
 ```
 
-## Execução
+### GET /api/v1/zip-code-queries/{externalId}
 
-Subir tudo com Docker Compose:
+- Returns detailed query log by external UUID
+
+```bash
+curl http://localhost:8080/api/v1/zip-code-queries/5dbf0be0-77ff-4c5d-a69f-d8452d58fbd2
+```
+
+## How to Run
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-Serviços:
-- aplicação: `http://localhost:8080`
-- PostgreSQL: `localhost:45432`
-- WireMock: `http://localhost:8081`
-
-Parar:
+Stop containers:
 
 ```bash
 docker compose down
-```
-
-Parar e remover volume do banco:
-
-```bash
 docker compose down -v
 ```
 
-## Variáveis de ambiente
+## Useful URLs
 
-| Variável | Descrição | Exemplo |
+- App: [http://localhost:8080/](http://localhost:8080/)
+- Swagger: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+- OpenAPI: [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+- History: [http://localhost:8080/history](http://localhost:8080/history)
+- Actuator health (if available): [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
+
+## Environment Variables
+
+| Variable | Description | Example |
 |---|---|---|
-| `POSTGRES_DB` | Nome do banco PostgreSQL | `buscacep` |
-| `POSTGRES_USER` | Usuário do PostgreSQL | `buscacep` |
-| `POSTGRES_PASSWORD` | Senha do PostgreSQL | `buscacep` |
-| `SPRING_DATASOURCE_URL` | URL JDBC da aplicação | `jdbc:postgresql://postgres:5432/buscacep` |
-| `SPRING_DATASOURCE_USERNAME` | Usuário JDBC | `buscacep` |
-| `SPRING_DATASOURCE_PASSWORD` | Senha JDBC | `buscacep` |
-| `SPRING_JPA_HIBERNATE_DDL_AUTO` | Estratégia de schema do Hibernate | `validate` |
-| `SPRING_FLYWAY_ENABLED` | Habilita Flyway no startup | `true` |
-| `CEP_CLIENT_WIREMOCK_URL` | URL base do WireMock | `http://wiremock:8080` |
-| `CEP_CLIENT_VIACEP_URL` | URL base do ViaCEP | `https://viacep.com.br/ws` |
-| `APP_PORT` | Porta publicada da aplicação | `8080` |
+| `POSTGRES_DB` | PostgreSQL database name | `buscacep` |
+| `POSTGRES_USER` | PostgreSQL user | `buscacep` |
+| `POSTGRES_PASSWORD` | PostgreSQL password | `buscacep` |
+| `SPRING_DATASOURCE_URL` | JDBC datasource URL used by the app | `jdbc:postgresql://postgres:5432/buscacep` |
+| `SPRING_DATASOURCE_USERNAME` | JDBC username | `buscacep` |
+| `SPRING_DATASOURCE_PASSWORD` | JDBC password | `buscacep` |
+| `SPRING_JPA_HIBERNATE_DDL_AUTO` | Hibernate schema strategy | `validate` |
+| `SPRING_FLYWAY_ENABLED` | Enables Flyway migrations at startup | `true` |
+| `CEP_CLIENT_WIREMOCK_URL` | WireMock base URL | `http://wiremock:8080` |
+| `CEP_CLIENT_VIACEP_URL` | ViaCEP base URL | `https://viacep.com.br/ws` |
+| `APP_PORT` | Published application port | `8080` |
 
-## Decisões técnicas
+## Technical Decisions
 
-- **WireMock como provedor primário:** garante previsibilidade e controle em ambiente local e testes de desafio técnico.
-- **ViaCEP como fallback:** mantém cobertura para CEPs não mapeados no mock, sem interromper a experiência da API.
-- **`BIGSERIAL` interno + `external_id` UUID:** `id` numérico facilita indexação e ordenação interna; `external_id` expõe identificador estável e seguro para consumo externo.
-- **`JSONB` em `response_body`:** permite armazenar o payload retornado de forma estruturada e flexível.
-- **`PageResponse` próprio:** evita expor `PageImpl` diretamente, desacopla contrato HTTP de detalhes internos do Spring Data e mantém resposta estável.
+- **WireMock + ViaCEP:** WireMock is the primary provider for predictable local behavior, and ViaCEP is used as fallback for non-mocked zip codes.
+- **`BIGSERIAL` + `external_id` UUID:** Numeric primary key is efficient for indexing and internal ordering, while UUID is safer to expose publicly.
+- **`JSONB`:** Provider response payload is stored in `response_body` with flexible schema.
+- **Custom `PageResponse`:** Avoids exposing Spring Data internal page models directly in API contracts.
+- **Fallback strategy:** Tries local mocked data first, then external provider, and logs outcomes consistently.
 
-## Princípios SOLID aplicados
+## SOLID Principles
 
-- **SRP (Single Responsibility Principle):**
-  - controllers tratam entrada/saída HTTP;
-  - service concentra regras de consulta, fallback e persistência;
-  - clients encapsulam integração com cada provedor.
-- **DIP (Dependency Inversion Principle):**
-  - `CepService` depende de abstrações de cliente (`CepClient`) e não de implementação concreta de HTTP.
-- **OCP (Open/Closed Principle):**
-  - a estratégia de provedores permite extensão com novos clients sem alterar o contrato público da API.
+- **SRP (Single Responsibility Principle):** Controllers handle HTTP, services handle business rules and fallback flow, clients handle external provider integrations.
+- **DIP (Dependency Inversion Principle):** Service layer depends on abstractions and provider-specific clients are isolated.
+- **OCP (Open/Closed Principle):** Provider strategy can be extended with new providers without changing endpoint contracts.
 
-## Estrutura do projeto
+## Project Structure
 
 ```text
 .
@@ -191,6 +181,7 @@ docker compose down -v
 │   │   │   ├── exception/
 │   │   │   ├── model/
 │   │   │   ├── repository/
+│   │   │   │   └── specification/
 │   │   │   └── service/
 │   │   └── resources/
 │   │       ├── application.yaml
@@ -201,15 +192,26 @@ docker compose down -v
 └── pom.xml
 ```
 
-## URLs úteis
+## Testing
 
-- Busca: `http://localhost:8080/`
-- Histórico: `http://localhost:8080/history`
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+The project includes:
 
-## Testes
+- Unit tests for service and controller behaviors.
+- Integration tests using H2.
+
+Run tests:
 
 ```bash
 ./mvnw test
 ```
+
+## Future Improvements
+
+- Add caching for frequent zip code queries.
+- Add rate limiting for public endpoints.
+- Add authentication and authorization.
+- Replace Thymeleaf frontend with a SPA frontend.
+
+## Final Note
+
+This project was developed as a technical challenge focusing on clean architecture, resilience, and ease of local execution.
