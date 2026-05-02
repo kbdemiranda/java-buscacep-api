@@ -1,13 +1,13 @@
 package io.github.kbdemiranda.zipcode.search.controller;
 
-import io.github.kbdemiranda.zipcode.search.dto.CepQueryLogResponseDTO;
-import io.github.kbdemiranda.zipcode.search.dto.CepQueryLogDetailResponseDTO;
+import io.github.kbdemiranda.zipcode.search.dto.ZipCodeQueryLogResponseDTO;
+import io.github.kbdemiranda.zipcode.search.dto.ZipCodeQueryLogDetailResponseDTO;
 import io.github.kbdemiranda.zipcode.search.dto.ErrorResponseDTO;
-import io.github.kbdemiranda.zipcode.search.dto.CepQueryLogFilterDTO;
+import io.github.kbdemiranda.zipcode.search.dto.ZipCodeQueryLogFilterDTO;
 import io.github.kbdemiranda.zipcode.search.dto.PageResponse;
-import io.github.kbdemiranda.zipcode.search.model.CepProvider;
-import io.github.kbdemiranda.zipcode.search.model.CepQueryStatus;
-import io.github.kbdemiranda.zipcode.search.service.CepService;
+import io.github.kbdemiranda.zipcode.search.model.ZipCodeProvider;
+import io.github.kbdemiranda.zipcode.search.model.ZipCodeQueryStatus;
+import io.github.kbdemiranda.zipcode.search.service.ZipCodeService;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,9 +32,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Zip Code Queries", description = "Endpoints for listing and retrieving zip code queries")
-public class CepQueryLogController {
+public class ZipCodeQueryController {
 
-    private final CepService cepService;
+    private final ZipCodeService zipCodeService;
 
     @GetMapping("/zip-code-queries")
     @Operation(
@@ -54,7 +54,7 @@ public class CepQueryLogController {
             content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))
         )
     })
-    public PageResponse<CepQueryLogResponseDTO> findAll(
+    public PageResponse<ZipCodeQueryLogResponseDTO> listQueries(
         @Parameter(description = "Page number (0-based)", example = "0")
         @Min(value = 0, message = "page must be greater than or equal to 0")
         @RequestParam(defaultValue = "0") int page,
@@ -64,9 +64,9 @@ public class CepQueryLogController {
         @Parameter(description = "Zip code filter (with or without mask)", example = "04364030")
         @RequestParam(required = false) String cep,
         @Parameter(description = "Query status filter", example = "SUCCESS")
-        @RequestParam(required = false) CepQueryStatus status,
+        @RequestParam(required = false) ZipCodeQueryStatus status,
         @Parameter(description = "Provider filter", example = "WIREMOCK")
-        @RequestParam(required = false) CepProvider provider,
+        @RequestParam(required = false) ZipCodeProvider provider,
         @Parameter(description = "Filter logs with request timestamp >= dateFrom", example = "2026-04-01T00:00:00")
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
         @RequestParam(required = false) LocalDateTime dateFrom,
@@ -74,8 +74,9 @@ public class CepQueryLogController {
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
         @RequestParam(required = false) LocalDateTime dateTo
     ) {
-        CepQueryLogFilterDTO filter = new CepQueryLogFilterDTO(cep, status, provider, dateFrom, dateTo);
-        return cepService.findAll(page, size, filter);
+        String zipCodeInput = cep;
+        ZipCodeQueryLogFilterDTO filter = new ZipCodeQueryLogFilterDTO(zipCodeInput, status, provider, dateFrom, dateTo);
+        return zipCodeService.listQueries(page, size, filter);
     }
 
     @GetMapping("/zip-code-queries/{externalId}")
@@ -87,7 +88,7 @@ public class CepQueryLogController {
         @ApiResponse(
             responseCode = "200",
             description = "Log returned successfully",
-            content = @Content(schema = @Schema(implementation = CepQueryLogDetailResponseDTO.class))
+            content = @Content(schema = @Schema(implementation = ZipCodeQueryLogDetailResponseDTO.class))
         ),
         @ApiResponse(
             responseCode = "400",
@@ -100,10 +101,10 @@ public class CepQueryLogController {
             content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class))
         )
     })
-    public CepQueryLogDetailResponseDTO findByExternalId(
+    public ZipCodeQueryLogDetailResponseDTO findByExternalId(
         @Parameter(description = "External public identifier of the zip code query", example = "5dbf0be0-77ff-4c5d-a69f-d8452d58fbd2")
         @PathVariable UUID externalId
     ) {
-        return cepService.findByExternalId(externalId);
+        return zipCodeService.findByExternalId(externalId);
     }
 }

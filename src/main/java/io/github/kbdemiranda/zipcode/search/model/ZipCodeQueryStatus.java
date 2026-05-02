@@ -1,6 +1,6 @@
 package io.github.kbdemiranda.zipcode.search.model;
 
-public enum CepQueryStatus {
+public enum ZipCodeQueryStatus {
     SUCCESS,
     NOT_FOUND,
     ERROR

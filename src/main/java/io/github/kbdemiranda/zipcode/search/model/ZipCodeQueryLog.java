@@ -19,7 +19,7 @@ import org.hibernate.type.SqlTypes;
 @AllArgsConstructor
 @Entity
 @Table(name = "cep_query_logs")
-public class CepQueryLog {
+public class ZipCodeQueryLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,16 +28,16 @@ public class CepQueryLog {
     @Column(name = "external_id", nullable = false, unique = true)
     private UUID externalId;
 
-    @Column(name = "cep", nullable = false, length = 8)
-    private String cep;
+    @Column(name = "zip_code", nullable = false, length = 8)
+    private String zipCode;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "provider", nullable = false, length = 50)
-    private CepProvider provider;
+    private ZipCodeProvider provider;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
-    private CepQueryStatus status;
+    private ZipCodeQueryStatus status;
 
     @Column(name = "request_timestamp", nullable = false)
     private LocalDateTime requestTimestamp;

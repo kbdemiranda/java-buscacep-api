@@ -1,10 +1,10 @@
 package io.github.kbdemiranda.zipcode.search.controller;
 
 import io.github.kbdemiranda.zipcode.search.dto.ErrorResponseDTO;
-import io.github.kbdemiranda.zipcode.search.exception.CepNotFoundException;
-import io.github.kbdemiranda.zipcode.search.exception.CepQueryLogNotFoundException;
-import io.github.kbdemiranda.zipcode.search.exception.ExternalCepClientException;
-import io.github.kbdemiranda.zipcode.search.exception.InvalidCepException;
+import io.github.kbdemiranda.zipcode.search.exception.ZipCodeNotFoundException;
+import io.github.kbdemiranda.zipcode.search.exception.ZipCodeQueryLogNotFoundException;
+import io.github.kbdemiranda.zipcode.search.exception.ExternalZipCodeClientException;
+import io.github.kbdemiranda.zipcode.search.exception.InvalidZipCodeException;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -23,24 +23,24 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(CepNotFoundException.class)
-    public ResponseEntity<ErrorResponseDTO> handleNotFound(CepNotFoundException e, HttpServletRequest request) {
+    @ExceptionHandler(ZipCodeNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleNotFound(ZipCodeNotFoundException e, HttpServletRequest request) {
         return buildResponse(HttpStatus.NOT_FOUND, "CEP não encontrado", request);
     }
 
-    @ExceptionHandler(CepQueryLogNotFoundException.class)
-    public ResponseEntity<ErrorResponseDTO> handleCepQueryLogNotFound(CepQueryLogNotFoundException e, HttpServletRequest request) {
+    @ExceptionHandler(ZipCodeQueryLogNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleZipCodeQueryLogNotFound(ZipCodeQueryLogNotFoundException e, HttpServletRequest request) {
         return buildResponse(HttpStatus.NOT_FOUND, "Consulta de CEP não encontrada", request);
     }
 
-    @ExceptionHandler(InvalidCepException.class)
-    public ResponseEntity<ErrorResponseDTO> handleInvalidCep(InvalidCepException e, HttpServletRequest request) {
+    @ExceptionHandler(InvalidZipCodeException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInvalidZipCode(InvalidZipCodeException e, HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, e.getMessage(), request);
     }
 
-    @ExceptionHandler(ExternalCepClientException.class)
+    @ExceptionHandler(ExternalZipCodeClientException.class)
     public ResponseEntity<ErrorResponseDTO> handleExternalClientError(
-        ExternalCepClientException e,
+        ExternalZipCodeClientException e,
         HttpServletRequest request
     ) {
         return buildResponse(HttpStatus.BAD_GATEWAY, "Falha ao consultar provedor externo", request);

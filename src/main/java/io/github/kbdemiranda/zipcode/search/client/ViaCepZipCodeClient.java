@@ -1,10 +1,10 @@
 package io.github.kbdemiranda.zipcode.search.client;
 
-import io.github.kbdemiranda.zipcode.search.dto.CepResponseDTO;
+import io.github.kbdemiranda.zipcode.search.dto.ZipCodeResponseDTO;
 import io.github.kbdemiranda.zipcode.search.dto.ViaCepResponseDTO;
-import io.github.kbdemiranda.zipcode.search.exception.ExternalCepClientException;
-import io.github.kbdemiranda.zipcode.search.config.CepClientProperties;
-import io.github.kbdemiranda.zipcode.search.model.CepProvider;
+import io.github.kbdemiranda.zipcode.search.exception.ExternalZipCodeClientException;
+import io.github.kbdemiranda.zipcode.search.config.ZipCodeClientProperties;
+import io.github.kbdemiranda.zipcode.search.model.ZipCodeProvider;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatusCode;
@@ -14,16 +14,16 @@ import org.springframework.web.client.RestTemplate;
 
 @Component
 @RequiredArgsConstructor
-public class ViaCepClient implements CepClient {
+public class ViaCepZipCodeClient implements ZipCodeClient {
 
     private final RestTemplate restTemplate;
-    private final CepClientProperties cepClientProperties;
+    private final ZipCodeClientProperties zipCodeClientProperties;
 
     @Override
-    public Optional<CepResponseDTO> findByCep(String cep) {
-        String url = cepClientProperties.viacepUrl() + "/{cep}/json";
+    public Optional<ZipCodeResponseDTO> searchZipCode(String zipCode) {
+        String url = zipCodeClientProperties.viacepUrl() + "/{zipCode}/json";
         try {
-            ViaCepResponseDTO response = restTemplate.getForObject(url, ViaCepResponseDTO.class, cep);
+            ViaCepResponseDTO response = restTemplate.getForObject(url, ViaCepResponseDTO.class, zipCode);
             if (response == null) {
                 return Optional.empty();
             }
@@ -34,8 +34,8 @@ public class ViaCepClient implements CepClient {
                 return Optional.empty();
             }
 
-            CepResponseDTO dto = CepResponseDTO.builder()
-                .cep(response.cep())
+            ZipCodeResponseDTO dto = ZipCodeResponseDTO.builder()
+                .zipCode(response.cep())
                 .logradouro(response.logradouro())
                 .complemento(response.complemento())
                 .bairro(response.bairro())
@@ -48,9 +48,9 @@ public class ViaCepClient implements CepClient {
             if (statusCode.value() == 404) {
                 return Optional.empty();
             }
-            throw new ExternalCepClientException(CepProvider.VIACEP, "ViaCEP call failed", e);
+            throw new ExternalZipCodeClientException(ZipCodeProvider.VIACEP, "ViaCEP call failed", e);
         } catch (Exception e) {
-            throw new ExternalCepClientException(CepProvider.VIACEP, "ViaCEP call failed", e);
+            throw new ExternalZipCodeClientException(ZipCodeProvider.VIACEP, "ViaCEP call failed", e);
         }
     }
 }

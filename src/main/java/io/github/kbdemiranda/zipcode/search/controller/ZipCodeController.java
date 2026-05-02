@@ -1,7 +1,7 @@
 package io.github.kbdemiranda.zipcode.search.controller;
 
-import io.github.kbdemiranda.zipcode.search.dto.CepResponseDTO;
-import io.github.kbdemiranda.zipcode.search.service.CepService;
+import io.github.kbdemiranda.zipcode.search.dto.ZipCodeResponseDTO;
+import io.github.kbdemiranda.zipcode.search.service.ZipCodeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -22,9 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Zip Codes", description = "Endpoints for zip code lookup")
-public class CepController {
+public class ZipCodeController {
 
-    private final CepService cepService;
+    private final ZipCodeService zipCodeService;
 
     @GetMapping("/{cep}")
     @Operation(
@@ -54,7 +54,7 @@ public class CepController {
             content = @Content(schema = @Schema(implementation = io.github.kbdemiranda.zipcode.search.dto.ErrorResponseDTO.class))
         )
     })
-    public CepResponseDTO findByCep(
+    public ZipCodeResponseDTO searchZipCode(
         @Parameter(
             description = "Zip code value (8 digits or formatted as 99999-999)",
             example = "04364-030"
@@ -62,6 +62,7 @@ public class CepController {
         @Pattern(regexp = "^\\d{8}$|^\\d{5}-\\d{3}$", message = "CEP must have 8 digits or format 99999-999")
         @PathVariable String cep
     ) {
-        return cepService.findCep(cep);
+        String zipCodeInput = cep;
+        return zipCodeService.searchZipCode(zipCodeInput);
     }
 }

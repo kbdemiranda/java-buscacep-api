@@ -8,12 +8,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import io.github.kbdemiranda.zipcode.search.dto.CepQueryLogResponseDTO;
-import io.github.kbdemiranda.zipcode.search.dto.CepQueryLogDetailResponseDTO;
-import io.github.kbdemiranda.zipcode.search.dto.CepQueryLogFilterDTO;
+import io.github.kbdemiranda.zipcode.search.dto.ZipCodeQueryLogResponseDTO;
+import io.github.kbdemiranda.zipcode.search.dto.ZipCodeQueryLogDetailResponseDTO;
+import io.github.kbdemiranda.zipcode.search.dto.ZipCodeQueryLogFilterDTO;
 import io.github.kbdemiranda.zipcode.search.dto.PageResponse;
-import io.github.kbdemiranda.zipcode.search.exception.CepQueryLogNotFoundException;
-import io.github.kbdemiranda.zipcode.search.service.CepService;
+import io.github.kbdemiranda.zipcode.search.exception.ZipCodeQueryLogNotFoundException;
+import io.github.kbdemiranda.zipcode.search.service.ZipCodeService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -24,19 +24,19 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(controllers = CepQueryLogController.class)
+@WebMvcTest(controllers = ZipCodeQueryController.class)
 @Import(GlobalExceptionHandler.class)
-class CepQueryLogControllerTest {
+class ZipCodeQueryControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private CepService cepService;
+    private ZipCodeService zipCodeService;
 
     @Test
     void shouldReturnPageMetadataForCustomPagination() throws Exception {
-        when(cepService.findAll(eq(0), eq(10), any(CepQueryLogFilterDTO.class))).thenReturn(buildPageResponse(0, 10, 13, 2));
+        when(zipCodeService.listQueries(eq(0), eq(10), any(ZipCodeQueryLogFilterDTO.class))).thenReturn(buildPageResponse(0, 10, 13, 2));
 
         mockMvc.perform(get("/api/v1/zip-code-queries?page=0&size=10"))
             .andExpect(status().isOk())
@@ -49,7 +49,7 @@ class CepQueryLogControllerTest {
 
     @Test
     void shouldReturnRequestedSizeWhenSizeIsFive() throws Exception {
-        when(cepService.findAll(eq(0), eq(5), any(CepQueryLogFilterDTO.class))).thenReturn(buildPageResponse(0, 5, 13, 3));
+        when(zipCodeService.listQueries(eq(0), eq(5), any(ZipCodeQueryLogFilterDTO.class))).thenReturn(buildPageResponse(0, 5, 13, 3));
 
         mockMvc.perform(get("/api/v1/zip-code-queries?page=0&size=5"))
             .andExpect(status().isOk())
@@ -58,7 +58,7 @@ class CepQueryLogControllerTest {
 
     @Test
     void shouldReturnRequestedPageWhenPageIsOne() throws Exception {
-        when(cepService.findAll(eq(1), eq(5), any(CepQueryLogFilterDTO.class))).thenReturn(buildPageResponse(1, 5, 13, 3));
+        when(zipCodeService.listQueries(eq(1), eq(5), any(ZipCodeQueryLogFilterDTO.class))).thenReturn(buildPageResponse(1, 5, 13, 3));
 
         mockMvc.perform(get("/api/v1/zip-code-queries?page=1&size=5"))
             .andExpect(status().isOk())
@@ -67,14 +67,14 @@ class CepQueryLogControllerTest {
 
     @Test
     void shouldUseDefaultPaginationWhenParametersAreNotProvided() throws Exception {
-        when(cepService.findAll(eq(0), eq(10), any(CepQueryLogFilterDTO.class))).thenReturn(buildPageResponse(0, 10, 13, 2));
+        when(zipCodeService.listQueries(eq(0), eq(10), any(ZipCodeQueryLogFilterDTO.class))).thenReturn(buildPageResponse(0, 10, 13, 2));
 
         mockMvc.perform(get("/api/v1/zip-code-queries"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page").value(0))
             .andExpect(jsonPath("$.size").value(10));
 
-        verify(cepService).findAll(eq(0), eq(10), any(CepQueryLogFilterDTO.class));
+        verify(zipCodeService).listQueries(eq(0), eq(10), any(ZipCodeQueryLogFilterDTO.class));
     }
 
     @Test
@@ -91,10 +91,10 @@ class CepQueryLogControllerTest {
     @Test
     void shouldFindZipCodeQueryByExternalId() throws Exception {
         UUID externalId = UUID.randomUUID();
-        when(cepService.findByExternalId(externalId)).thenReturn(
-            CepQueryLogDetailResponseDTO.builder()
+        when(zipCodeService.findByExternalId(externalId)).thenReturn(
+            ZipCodeQueryLogDetailResponseDTO.builder()
                 .externalId(externalId)
-                .cep("04364030")
+                .zipCode("04364030")
                 .provider("WIREMOCK")
                 .status("SUCCESS")
                 .requestTimestamp(LocalDateTime.of(2026, 4, 30, 15, 22, 0))
@@ -116,7 +116,7 @@ class CepQueryLogControllerTest {
     @Test
     void shouldReturn404WhenExternalIdDoesNotExist() throws Exception {
         UUID externalId = UUID.randomUUID();
-        when(cepService.findByExternalId(externalId)).thenThrow(new CepQueryLogNotFoundException(externalId));
+        when(zipCodeService.findByExternalId(externalId)).thenThrow(new ZipCodeQueryLogNotFoundException(externalId));
 
         mockMvc.perform(get("/api/v1/zip-code-queries/{externalId}", externalId))
             .andExpect(status().isNotFound())
@@ -132,10 +132,10 @@ class CepQueryLogControllerTest {
             .andExpect(jsonPath("$.path").value("/api/v1/zip-code-queries/not-a-uuid"));
     }
 
-    private static PageResponse<CepQueryLogResponseDTO> buildPageResponse(int page, int size, long totalElements, int totalPages) {
-        CepQueryLogResponseDTO log = CepQueryLogResponseDTO.builder()
+    private static PageResponse<ZipCodeQueryLogResponseDTO> buildPageResponse(int page, int size, long totalElements, int totalPages) {
+        ZipCodeQueryLogResponseDTO log = ZipCodeQueryLogResponseDTO.builder()
             .externalId(UUID.randomUUID())
-            .cep("04364030")
+            .zipCode("04364030")
             .provider("WIREMOCK")
             .status("SUCCESS")
             .requestTimestamp(LocalDateTime.now())

@@ -6,11 +6,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import io.github.kbdemiranda.zipcode.search.dto.CepResponseDTO;
-import io.github.kbdemiranda.zipcode.search.exception.CepNotFoundException;
-import io.github.kbdemiranda.zipcode.search.exception.ExternalCepClientException;
-import io.github.kbdemiranda.zipcode.search.model.CepProvider;
-import io.github.kbdemiranda.zipcode.search.service.CepService;
+import io.github.kbdemiranda.zipcode.search.dto.ZipCodeResponseDTO;
+import io.github.kbdemiranda.zipcode.search.exception.ZipCodeNotFoundException;
+import io.github.kbdemiranda.zipcode.search.exception.ExternalZipCodeClientException;
+import io.github.kbdemiranda.zipcode.search.model.ZipCodeProvider;
+import io.github.kbdemiranda.zipcode.search.service.ZipCodeService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -21,15 +21,15 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(controllers = CepController.class)
+@WebMvcTest(controllers = ZipCodeController.class)
 @Import(GlobalExceptionHandler.class)
-class CepControllerTest {
+class ZipCodeControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private CepService cepService;
+    private ZipCodeService zipCodeService;
 
     @ParameterizedTest
     @CsvSource({
@@ -37,17 +37,17 @@ class CepControllerTest {
         "01001000,01001-000",
         "30140071,30140-071"
     })
-    void shouldReturn200ForKnownZipCodes(String inputCep, String responseCep) throws Exception {
-        when(cepService.findCep(inputCep)).thenReturn(
-            CepResponseDTO.builder()
-                .cep(responseCep)
+    void shouldReturn200ForKnownZipCodes(String inputZipCode, String responseCep) throws Exception {
+        when(zipCodeService.searchZipCode(inputZipCode)).thenReturn(
+            ZipCodeResponseDTO.builder()
+                .zipCode(responseCep)
                 .logradouro("Rua de teste")
                 .localidade("Cidade")
                 .uf("SP")
                 .build()
         );
 
-        mockMvc.perform(get("/api/v1/zip-codes/{cep}", inputCep))
+        mockMvc.perform(get("/api/v1/zip-codes/{cep}", inputZipCode))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.cep").value(responseCep))
             .andExpect(jsonPath("$.logradouro").exists())
@@ -57,21 +57,21 @@ class CepControllerTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"123", "12AB5678"})
-    void shouldReturn400ForInvalidZipCode(String invalidCep) throws Exception {
-        mockMvc.perform(get("/api/v1/zip-codes/{cep}", invalidCep))
+    void shouldReturn400ForInvalidZipCode(String invalidZipCode) throws Exception {
+        mockMvc.perform(get("/api/v1/zip-codes/{cep}", invalidZipCode))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.timestamp").exists())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.error").value("Bad Request"))
             .andExpect(jsonPath("$.message").exists())
-            .andExpect(jsonPath("$.path").value("/api/v1/zip-codes/" + invalidCep));
+            .andExpect(jsonPath("$.path").value("/api/v1/zip-codes/" + invalidZipCode));
 
-        verifyNoInteractions(cepService);
+        verifyNoInteractions(zipCodeService);
     }
 
     @Test
-    void shouldReturn404WithMessageWhenCepIsNotFound() throws Exception {
-        when(cepService.findCep("00000000")).thenThrow(new CepNotFoundException("00000000"));
+    void shouldReturn404WithMessageWhenZipCodeIsNotFound() throws Exception {
+        when(zipCodeService.searchZipCode("00000000")).thenThrow(new ZipCodeNotFoundException("00000000"));
 
         mockMvc.perform(get("/api/v1/zip-codes/{cep}", "00000000"))
             .andExpect(status().isNotFound())
@@ -84,12 +84,12 @@ class CepControllerTest {
 
     @Test
     void shouldReturn502ForExternalProviderError() throws Exception {
-        ExternalCepClientException error = new ExternalCepClientException(
-            CepProvider.WIREMOCK,
+        ExternalZipCodeClientException error = new ExternalZipCodeClientException(
+            ZipCodeProvider.WIREMOCK,
             "WireMock timeout",
             new RuntimeException("timeout")
         );
-        when(cepService.findCep("04364030")).thenThrow(error);
+        when(zipCodeService.searchZipCode("04364030")).thenThrow(error);
 
         mockMvc.perform(get("/api/v1/zip-codes/{cep}", "04364030"))
             .andExpect(status().isBadGateway())
@@ -102,7 +102,7 @@ class CepControllerTest {
 
     @Test
     void shouldReturn500ForUnexpectedError() throws Exception {
-        when(cepService.findCep("04364030")).thenThrow(new RuntimeException("boom"));
+        when(zipCodeService.searchZipCode("04364030")).thenThrow(new RuntimeException("boom"));
 
         mockMvc.perform(get("/api/v1/zip-codes/{cep}", "04364030"))
             .andExpect(status().isInternalServerError())

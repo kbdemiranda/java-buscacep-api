@@ -2,9 +2,9 @@ package io.github.kbdemiranda.zipcode.search.exception;
 
 import java.util.UUID;
 
-public class CepQueryLogNotFoundException extends RuntimeException {
+public class ZipCodeQueryLogNotFoundException extends RuntimeException {
 
-    public CepQueryLogNotFoundException(UUID externalId) {
+    public ZipCodeQueryLogNotFoundException(UUID externalId) {
         super("Consulta de CEP não encontrada para externalId: " + externalId);
     }
 }

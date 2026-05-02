@@ -1,22 +1,22 @@
 package io.github.kbdemiranda.zipcode.search.repository.specification;
 
-import io.github.kbdemiranda.zipcode.search.dto.CepQueryLogFilterDTO;
-import io.github.kbdemiranda.zipcode.search.model.CepQueryLog;
+import io.github.kbdemiranda.zipcode.search.dto.ZipCodeQueryLogFilterDTO;
+import io.github.kbdemiranda.zipcode.search.model.ZipCodeQueryLog;
 import java.util.ArrayList;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
-public final class CepQueryLogSpecification {
+public final class ZipCodeQueryLogSpecification {
 
-    private CepQueryLogSpecification() {
+    private ZipCodeQueryLogSpecification() {
     }
 
-    public static Specification<CepQueryLog> withFilters(CepQueryLogFilterDTO filter) {
+    public static Specification<ZipCodeQueryLog> withFilters(ZipCodeQueryLogFilterDTO filter) {
         return (root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
 
-            if (filter.getCep() != null && !filter.getCep().isBlank()) {
-                predicates.add(cb.equal(root.get("cep"), filter.getCep()));
+            if (filter.getZipCode() != null && !filter.getZipCode().isBlank()) {
+                predicates.add(cb.equal(root.get("zipCode"), filter.getZipCode()));
             }
             if (filter.getStatus() != null) {
                 predicates.add(cb.equal(root.get("status"), filter.getStatus()));

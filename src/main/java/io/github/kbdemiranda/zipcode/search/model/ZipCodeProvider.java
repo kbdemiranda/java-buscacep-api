@@ -1,6 +1,6 @@
 package io.github.kbdemiranda.zipcode.search.model;
 
-public enum CepProvider {
+public enum ZipCodeProvider {
     WIREMOCK,
     VIACEP
 }

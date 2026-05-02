@@ -9,12 +9,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import io.github.kbdemiranda.zipcode.search.client.ViaCepClient;
-import io.github.kbdemiranda.zipcode.search.client.WiremockCepClient;
-import io.github.kbdemiranda.zipcode.search.dto.CepResponseDTO;
-import io.github.kbdemiranda.zipcode.search.model.CepProvider;
-import io.github.kbdemiranda.zipcode.search.model.CepQueryStatus;
-import io.github.kbdemiranda.zipcode.search.repository.CepQueryLogRepository;
+import io.github.kbdemiranda.zipcode.search.client.ViaCepZipCodeClient;
+import io.github.kbdemiranda.zipcode.search.client.WireMockZipCodeClient;
+import io.github.kbdemiranda.zipcode.search.dto.ZipCodeResponseDTO;
+import io.github.kbdemiranda.zipcode.search.model.ZipCodeProvider;
+import io.github.kbdemiranda.zipcode.search.model.ZipCodeQueryStatus;
+import io.github.kbdemiranda.zipcode.search.repository.ZipCodeQueryLogRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,28 +38,28 @@ import org.springframework.test.web.servlet.MockMvc;
 })
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class CepApiIntegrationTest {
+class ZipCodeApiIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private CepQueryLogRepository cepQueryLogRepository;
+    private ZipCodeQueryLogRepository zipCodeQueryLogRepository;
 
     @MockitoBean
-    private WiremockCepClient wiremockCepClient;
+    private WireMockZipCodeClient wireMockZipCodeClient;
 
     @MockitoBean
-    private ViaCepClient viaCepClient;
+    private ViaCepZipCodeClient viaCepZipCodeClient;
 
     @BeforeEach
     void setUp() {
-        cepQueryLogRepository.deleteAll();
+        zipCodeQueryLogRepository.deleteAll();
     }
 
     @Test
     void shouldReturnZipCodeWhenFoundInWireMock() throws Exception {
-        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        when(wireMockZipCodeClient.searchZipCode("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
 
         mockMvc.perform(get("/api/v1/zip-codes/{cep}", "04364030"))
             .andExpect(status().isOk())
@@ -69,37 +69,37 @@ class CepApiIntegrationTest {
             .andExpect(jsonPath("$.localidade").value("Sao Paulo"))
             .andExpect(jsonPath("$.uf").value("SP"));
 
-        assertThat(cepQueryLogRepository.count()).isEqualTo(1);
-        var log = cepQueryLogRepository.findAll().getFirst();
-        assertThat(log.getProvider()).isEqualTo(CepProvider.WIREMOCK);
-        assertThat(log.getStatus()).isEqualTo(CepQueryStatus.SUCCESS);
-        assertThat(log.getCep()).isEqualTo("04364030");
-        verify(viaCepClient, never()).findByCep("04364030");
+        assertThat(zipCodeQueryLogRepository.count()).isEqualTo(1);
+        var log = zipCodeQueryLogRepository.findAll().getFirst();
+        assertThat(log.getProvider()).isEqualTo(ZipCodeProvider.WIREMOCK);
+        assertThat(log.getStatus()).isEqualTo(ZipCodeQueryStatus.SUCCESS);
+        assertThat(log.getZipCode()).isEqualTo("04364030");
+        verify(viaCepZipCodeClient, never()).searchZipCode("04364030");
     }
 
     @Test
     void shouldFallbackToViaCepWhenWireMockDoesNotFindZipCode() throws Exception {
-        when(wiremockCepClient.findByCep("30140071")).thenReturn(Optional.empty());
-        when(viaCepClient.findByCep("30140071")).thenReturn(Optional.of(buildResponse("30140-071")));
+        when(wireMockZipCodeClient.searchZipCode("30140071")).thenReturn(Optional.empty());
+        when(viaCepZipCodeClient.searchZipCode("30140071")).thenReturn(Optional.of(buildResponse("30140-071")));
 
         mockMvc.perform(get("/api/v1/zip-codes/{cep}", "30140071"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.cep").value("30140-071"));
 
-        var inOrder = inOrder(wiremockCepClient, viaCepClient);
-        inOrder.verify(wiremockCepClient).findByCep("30140071");
-        inOrder.verify(viaCepClient).findByCep("30140071");
+        var inOrder = inOrder(wireMockZipCodeClient, viaCepZipCodeClient);
+        inOrder.verify(wireMockZipCodeClient).searchZipCode("30140071");
+        inOrder.verify(viaCepZipCodeClient).searchZipCode("30140071");
 
-        assertThat(cepQueryLogRepository.count()).isEqualTo(1);
-        var log = cepQueryLogRepository.findAll().getFirst();
-        assertThat(log.getProvider()).isEqualTo(CepProvider.VIACEP);
-        assertThat(log.getStatus()).isEqualTo(CepQueryStatus.SUCCESS);
+        assertThat(zipCodeQueryLogRepository.count()).isEqualTo(1);
+        var log = zipCodeQueryLogRepository.findAll().getFirst();
+        assertThat(log.getProvider()).isEqualTo(ZipCodeProvider.VIACEP);
+        assertThat(log.getStatus()).isEqualTo(ZipCodeQueryStatus.SUCCESS);
     }
 
     @Test
     void shouldReturnNotFoundWhenZipCodeDoesNotExist() throws Exception {
-        when(wiremockCepClient.findByCep("00000000")).thenReturn(Optional.empty());
-        when(viaCepClient.findByCep("00000000")).thenReturn(Optional.empty());
+        when(wireMockZipCodeClient.searchZipCode("00000000")).thenReturn(Optional.empty());
+        when(viaCepZipCodeClient.searchZipCode("00000000")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/v1/zip-codes/{cep}", "00000000"))
             .andExpect(status().isNotFound())
@@ -109,13 +109,13 @@ class CepApiIntegrationTest {
             .andExpect(jsonPath("$.message").value("CEP não encontrado"))
             .andExpect(jsonPath("$.path").value("/api/v1/zip-codes/00000000"));
 
-        assertThat(cepQueryLogRepository.count()).isEqualTo(1);
-        var log = cepQueryLogRepository.findAll().getFirst();
-        assertThat(log.getStatus()).isEqualTo(CepQueryStatus.NOT_FOUND);
+        assertThat(zipCodeQueryLogRepository.count()).isEqualTo(1);
+        var log = zipCodeQueryLogRepository.findAll().getFirst();
+        assertThat(log.getStatus()).isEqualTo(ZipCodeQueryStatus.NOT_FOUND);
     }
 
     @Test
-    void shouldReturn400AndNotCallClientsForInvalidCep() throws Exception {
+    void shouldReturn400AndNotCallClientsForInvalidZipCode() throws Exception {
         mockMvc.perform(get("/api/v1/zip-codes/{cep}", "123"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.timestamp").exists())
@@ -124,26 +124,26 @@ class CepApiIntegrationTest {
             .andExpect(jsonPath("$.message").exists())
             .andExpect(jsonPath("$.path").value("/api/v1/zip-codes/123"));
 
-        verify(wiremockCepClient, never()).findByCep(org.mockito.ArgumentMatchers.anyString());
-        verify(viaCepClient, never()).findByCep(org.mockito.ArgumentMatchers.anyString());
-        assertThat(cepQueryLogRepository.count()).isZero();
+        verify(wireMockZipCodeClient, never()).searchZipCode(org.mockito.ArgumentMatchers.anyString());
+        verify(viaCepZipCodeClient, never()).searchZipCode(org.mockito.ArgumentMatchers.anyString());
+        assertThat(zipCodeQueryLogRepository.count()).isZero();
     }
 
     @Test
-    void shouldNormalizeFormattedCepBeforePersisting() throws Exception {
-        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+    void shouldNormalizeFormattedZipCodeBeforePersisting() throws Exception {
+        when(wireMockZipCodeClient.searchZipCode("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
 
         mockMvc.perform(get("/api/v1/zip-codes/{cep}", "04364-030"))
             .andExpect(status().isOk());
 
-        assertThat(cepQueryLogRepository.count()).isEqualTo(1);
-        var log = cepQueryLogRepository.findAll().getFirst();
-        assertThat(log.getCep()).isEqualTo("04364030");
+        assertThat(zipCodeQueryLogRepository.count()).isEqualTo(1);
+        var log = zipCodeQueryLogRepository.findAll().getFirst();
+        assertThat(log.getZipCode()).isEqualTo("04364030");
     }
 
     @Test
     void shouldReturnPaginationForCustomPageAndSize() throws Exception {
-        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        when(wireMockZipCodeClient.searchZipCode("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
         performLookup("04364030");
 
         mockMvc.perform(get("/api/v1/zip-code-queries?page=0&size=10"))
@@ -157,7 +157,7 @@ class CepApiIntegrationTest {
 
     @Test
     void shouldUseDefaultPagination() throws Exception {
-        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        when(wireMockZipCodeClient.searchZipCode("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
         performLookup("04364030");
 
         mockMvc.perform(get("/api/v1/zip-code-queries"))
@@ -169,13 +169,13 @@ class CepApiIntegrationTest {
 
     @Test
     void shouldReturnPageOneWithSizeFive() throws Exception {
-        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
-        when(wiremockCepClient.findByCep("30140071")).thenReturn(Optional.empty());
-        when(viaCepClient.findByCep("30140071")).thenReturn(Optional.of(buildResponse("30140-071")));
-        when(wiremockCepClient.findByCep("01001000")).thenReturn(Optional.of(buildResponse("01001-000")));
-        when(wiremockCepClient.findByCep("04661200")).thenReturn(Optional.of(buildResponse("04661-200")));
-        when(wiremockCepClient.findByCep("04730090")).thenReturn(Optional.of(buildResponse("04730-090")));
-        when(wiremockCepClient.findByCep("01153000")).thenReturn(Optional.of(buildResponse("01153-000")));
+        when(wireMockZipCodeClient.searchZipCode("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        when(wireMockZipCodeClient.searchZipCode("30140071")).thenReturn(Optional.empty());
+        when(viaCepZipCodeClient.searchZipCode("30140071")).thenReturn(Optional.of(buildResponse("30140-071")));
+        when(wireMockZipCodeClient.searchZipCode("01001000")).thenReturn(Optional.of(buildResponse("01001-000")));
+        when(wireMockZipCodeClient.searchZipCode("04661200")).thenReturn(Optional.of(buildResponse("04661-200")));
+        when(wireMockZipCodeClient.searchZipCode("04730090")).thenReturn(Optional.of(buildResponse("04730-090")));
+        when(wireMockZipCodeClient.searchZipCode("01153000")).thenReturn(Optional.of(buildResponse("01153-000")));
 
         performLookup("04364030");
         performLookup("30140071");
@@ -195,8 +195,8 @@ class CepApiIntegrationTest {
 
     @Test
     void shouldListZipCodeQueriesWithFilters() throws Exception {
-        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
-        when(wiremockCepClient.findByCep("01001000")).thenReturn(Optional.of(buildResponse("01001-000")));
+        when(wireMockZipCodeClient.searchZipCode("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        when(wireMockZipCodeClient.searchZipCode("01001000")).thenReturn(Optional.of(buildResponse("01001-000")));
         performLookup("04364030");
         performLookup("01001000");
 
@@ -207,10 +207,10 @@ class CepApiIntegrationTest {
     }
 
     @Test
-    void shouldFilterHistoryByStatus() throws Exception {
-        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
-        when(wiremockCepClient.findByCep("00000000")).thenReturn(Optional.empty());
-        when(viaCepClient.findByCep("00000000")).thenReturn(Optional.empty());
+    void shouldFilterQueryHistoryByStatus() throws Exception {
+        when(wireMockZipCodeClient.searchZipCode("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        when(wireMockZipCodeClient.searchZipCode("00000000")).thenReturn(Optional.empty());
+        when(viaCepZipCodeClient.searchZipCode("00000000")).thenReturn(Optional.empty());
         performLookup("04364030");
         mockMvc.perform(get("/api/v1/zip-codes/{cep}", "00000000"))
             .andExpect(status().isNotFound());
@@ -222,10 +222,10 @@ class CepApiIntegrationTest {
     }
 
     @Test
-    void shouldFilterHistoryByProvider() throws Exception {
-        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
-        when(wiremockCepClient.findByCep("30140071")).thenReturn(Optional.empty());
-        when(viaCepClient.findByCep("30140071")).thenReturn(Optional.of(buildResponse("30140-071")));
+    void shouldFilterQueryHistoryByProvider() throws Exception {
+        when(wireMockZipCodeClient.searchZipCode("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        when(wireMockZipCodeClient.searchZipCode("30140071")).thenReturn(Optional.empty());
+        when(viaCepZipCodeClient.searchZipCode("30140071")).thenReturn(Optional.of(buildResponse("30140-071")));
         performLookup("04364030");
         performLookup("30140071");
 
@@ -236,8 +236,8 @@ class CepApiIntegrationTest {
     }
 
     @Test
-    void shouldFilterHistoryByDateRange() throws Exception {
-        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+    void shouldFilterQueryHistoryByDateRange() throws Exception {
+        when(wireMockZipCodeClient.searchZipCode("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
         performLookup("04364030");
 
         mockMvc.perform(get("/api/v1/zip-code-queries")
@@ -254,10 +254,10 @@ class CepApiIntegrationTest {
     }
 
     @Test
-    void shouldFilterHistoryUsingCombinedFilters() throws Exception {
-        when(wiremockCepClient.findByCep("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
-        when(wiremockCepClient.findByCep("30140071")).thenReturn(Optional.empty());
-        when(viaCepClient.findByCep("30140071")).thenReturn(Optional.of(buildResponse("30140-071")));
+    void shouldFilterQueryHistoryUsingCombinedFilters() throws Exception {
+        when(wireMockZipCodeClient.searchZipCode("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        when(wireMockZipCodeClient.searchZipCode("30140071")).thenReturn(Optional.empty());
+        when(viaCepZipCodeClient.searchZipCode("30140071")).thenReturn(Optional.of(buildResponse("30140-071")));
         performLookup("04364030");
         performLookup("30140071");
 
@@ -325,9 +325,9 @@ class CepApiIntegrationTest {
             .andExpect(status().isOk());
     }
 
-    private static CepResponseDTO buildResponse(String cep) {
-        return CepResponseDTO.builder()
-            .cep(cep)
+    private static ZipCodeResponseDTO buildResponse(String cep) {
+        return ZipCodeResponseDTO.builder()
+            .zipCode(cep)
             .logradouro("Rua de teste")
             .bairro("Cidade Nova")
             .localidade("Sao Paulo")
