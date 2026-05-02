@@ -19,6 +19,7 @@ import io.github.kbdemiranda.zipcode.search.model.ZipCodeQueryStatus;
 import io.github.kbdemiranda.zipcode.search.repository.ZipCodeQueryLogRepository;
 import io.github.kbdemiranda.zipcode.search.repository.specification.ZipCodeQueryLogSpecification;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -140,10 +141,17 @@ public class ZipCodeService {
             .provider(log.getProvider().name())
             .status(log.getStatus().name())
             .requestTimestamp(log.getRequestTimestamp())
-            .responseBody(log.getResponseBody())
+            .responseBody(deserializeResponseBody(log.getResponseBody()))
             .errorMessage(log.getErrorMessage())
             .createdAt(log.getCreatedAt())
             .updatedAt(log.getUpdatedAt())
             .build();
+    }
+
+    private Map<String, Object> deserializeResponseBody(JsonNode responseBody) {
+        if (responseBody == null || responseBody.isNull()) {
+            return null;
+        }
+        return objectMapper.convertValue(responseBody, objectMapper.getTypeFactory().constructMapType(Map.class, String.class, Object.class));
     }
 }

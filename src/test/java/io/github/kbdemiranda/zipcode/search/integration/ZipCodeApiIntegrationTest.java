@@ -16,6 +16,7 @@ import io.github.kbdemiranda.zipcode.search.model.ZipCodeProvider;
 import io.github.kbdemiranda.zipcode.search.model.ZipCodeQueryStatus;
 import io.github.kbdemiranda.zipcode.search.repository.ZipCodeQueryLogRepository;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -318,6 +319,24 @@ class ZipCodeApiIntegrationTest {
             .andExpect(jsonPath("$.error").value("Bad Request"))
             .andExpect(jsonPath("$.message").value("Parâmetro inválido"))
             .andExpect(jsonPath("$.path").value("/api/v1/zip-code-queries"));
+    }
+
+    @Test
+    void shouldReturnZipCodeFieldsInDetailResponseBody() throws Exception {
+        when(wireMockZipCodeClient.searchZipCode("04364030")).thenReturn(Optional.of(buildResponse("04364-030")));
+        performLookup("04364030");
+
+        UUID externalId = zipCodeQueryLogRepository.findAll().getFirst().getExternalId();
+
+        mockMvc.perform(get("/api/v1/zip-code-queries/{externalId}", externalId))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.responseBody.cep").value("04364-030"))
+            .andExpect(jsonPath("$.responseBody.logradouro").value("Rua de teste"))
+            .andExpect(jsonPath("$.responseBody.bairro").value("Cidade Nova"))
+            .andExpect(jsonPath("$.responseBody.localidade").value("Sao Paulo"))
+            .andExpect(jsonPath("$.responseBody.uf").value("SP"))
+            .andExpect(jsonPath("$.responseBody.object").doesNotExist())
+            .andExpect(jsonPath("$.responseBody.containerNode").doesNotExist());
     }
 
     private void performLookup(String cep) throws Exception {

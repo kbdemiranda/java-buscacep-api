@@ -135,12 +135,12 @@ docker compose down -v
 
 | Variable | Description | Example |
 |---|---|---|
-| `POSTGRES_DB` | PostgreSQL database name | `buscacep` |
-| `POSTGRES_USER` | PostgreSQL user | `buscacep` |
-| `POSTGRES_PASSWORD` | PostgreSQL password | `buscacep` |
-| `SPRING_DATASOURCE_URL` | JDBC datasource URL used by the app | `jdbc:postgresql://postgres:5432/buscacep` |
-| `SPRING_DATASOURCE_USERNAME` | JDBC username | `buscacep` |
-| `SPRING_DATASOURCE_PASSWORD` | JDBC password | `buscacep` |
+| `POSTGRES_DB` | PostgreSQL database name | `searchzip` |
+| `POSTGRES_USER` | PostgreSQL user | `searchzip` |
+| `POSTGRES_PASSWORD` | PostgreSQL password | `searchzip` |
+| `SPRING_DATASOURCE_URL` | JDBC datasource URL used by the app | `jdbc:postgresql://postgres:5432/searchzip` |
+| `SPRING_DATASOURCE_USERNAME` | JDBC username | `searchzip` |
+| `SPRING_DATASOURCE_PASSWORD` | JDBC password | `searchzip` |
 | `SPRING_JPA_HIBERNATE_DDL_AUTO` | Hibernate schema strategy | `validate` |
 | `SPRING_FLYWAY_ENABLED` | Enables Flyway migrations at startup | `true` |
 | `CEP_CLIENT_WIREMOCK_URL` | WireMock base URL | `http://wiremock:8080` |

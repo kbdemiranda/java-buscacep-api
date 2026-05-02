@@ -2,9 +2,9 @@ spring:
   application:
     name: zip-code-search-api
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:45432/buscacep}
-    username: ${SPRING_DATASOURCE_USERNAME:buscacep}
-    password: ${SPRING_DATASOURCE_PASSWORD:buscacep}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:45432/searchzip}
+    username: ${SPRING_DATASOURCE_USERNAME:searchzip}
+    password: ${SPRING_DATASOURCE_PASSWORD:searchzip}
   jpa:
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}

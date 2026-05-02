@@ -1,9 +1,9 @@
 package io.github.kbdemiranda.zipcode.search.dto;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 import lombok.Builder;
 
@@ -22,7 +22,7 @@ public record ZipCodeQueryLogDetailResponseDTO(
     @Schema(description = "Timestamp when the query was made", example = "2026-04-30T15:22:00")
     LocalDateTime requestTimestamp,
     @Schema(description = "Raw response body returned by provider")
-    JsonNode responseBody,
+    Map<String, Object> responseBody,
     @Schema(description = "Error message in case of failed query", example = "WireMock timeout")
     String errorMessage,
     @Schema(description = "Record creation timestamp", example = "2026-04-30T15:22:00")
