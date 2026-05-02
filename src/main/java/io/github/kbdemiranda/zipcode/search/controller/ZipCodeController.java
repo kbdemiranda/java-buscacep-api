@@ -56,8 +56,7 @@ public class ZipCodeController {
     })
     public ZipCodeResponseDTO searchZipCode(
         @Parameter(
-            description = "Zip code value (8 digits or formatted as 99999-999)",
-            example = "04364-030"
+            description = "Zip code value (8 digits or formatted as 99999-999)"
         )
         @Pattern(regexp = "^\\d{8}$|^\\d{5}-\\d{3}$", message = "CEP must have 8 digits or format 99999-999")
         @PathVariable String cep

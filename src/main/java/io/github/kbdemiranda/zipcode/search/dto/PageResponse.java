@@ -7,13 +7,13 @@ import java.util.List;
 public record PageResponse<T>(
     @Schema(description = "Page content")
     List<T> content,
-    @Schema(description = "Current page number (0-based)", example = "0")
+    @Schema(description = "Current page number (0-based)")
     int page,
-    @Schema(description = "Page size", example = "10")
+    @Schema(description = "Page size")
     int size,
-    @Schema(description = "Total number of elements", example = "42")
+    @Schema(description = "Total number of elements")
     long totalElements,
-    @Schema(description = "Total number of pages", example = "5")
+    @Schema(description = "Total number of pages")
     int totalPages
 ) {
 }

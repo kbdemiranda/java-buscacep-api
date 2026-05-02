@@ -55,27 +55,26 @@ public class ZipCodeQueryController {
         )
     })
     public PageResponse<ZipCodeQueryLogResponseDTO> listQueries(
-        @Parameter(description = "Page number (0-based)", example = "0")
+        @Parameter(description = "Page number (0-based)")
         @Min(value = 0, message = "page must be greater than or equal to 0")
         @RequestParam(defaultValue = "0") int page,
-        @Parameter(description = "Page size", example = "10")
+        @Parameter(description = "Page size")
         @Min(value = 1, message = "size must be greater than or equal to 1")
         @RequestParam(defaultValue = "10") int size,
-        @Parameter(description = "Zip code filter (with or without mask)", example = "04364030")
-        @RequestParam(required = false) String cep,
-        @Parameter(description = "Query status filter", example = "SUCCESS")
+        @Parameter(description = "Zip code filter (with or without mask)")
+        @RequestParam(required = false) String zipCode,
+        @Parameter(description = "Query status filter")
         @RequestParam(required = false) ZipCodeQueryStatus status,
-        @Parameter(description = "Provider filter", example = "WIREMOCK")
+        @Parameter(description = "Provider filter")
         @RequestParam(required = false) ZipCodeProvider provider,
-        @Parameter(description = "Filter logs with request timestamp >= dateFrom", example = "2026-04-01T00:00:00")
+        @Parameter(description = "Filter logs with request timestamp >= dateFrom")
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
         @RequestParam(required = false) LocalDateTime dateFrom,
-        @Parameter(description = "Filter logs with request timestamp <= dateTo", example = "2026-04-30T23:59:59")
+        @Parameter(description = "Filter logs with request timestamp <= dateTo")
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
         @RequestParam(required = false) LocalDateTime dateTo
     ) {
-        String zipCodeInput = cep;
-        ZipCodeQueryLogFilterDTO filter = new ZipCodeQueryLogFilterDTO(zipCodeInput, status, provider, dateFrom, dateTo);
+        ZipCodeQueryLogFilterDTO filter = new ZipCodeQueryLogFilterDTO(zipCode, status, provider, dateFrom, dateTo);
         return zipCodeService.listQueries(page, size, filter);
     }
 
@@ -102,7 +101,7 @@ public class ZipCodeQueryController {
         )
     })
     public ZipCodeQueryLogDetailResponseDTO findByExternalId(
-        @Parameter(description = "External public identifier of the zip code query", example = "5dbf0be0-77ff-4c5d-a69f-d8452d58fbd2")
+        @Parameter(description = "External public identifier of the zip code query")
         @PathVariable UUID externalId
     ) {
         return zipCodeService.findByExternalId(externalId);

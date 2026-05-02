@@ -9,16 +9,16 @@ import lombok.Builder;
 @Builder
 @Schema(description = "CEP query log response")
 public record ZipCodeQueryLogResponseDTO(
-    @Schema(description = "External identifier for the query log", example = "5dbf0be0-77ff-4c5d-a69f-d8452d58fbd2")
+    @Schema(description = "External identifier for the query log")
     UUID externalId,
     @JsonProperty("cep")
-    @Schema(description = "Queried CEP", example = "04364-030")
+    @Schema(description = "Queried CEP")
     String zipCode,
-    @Schema(description = "Provider used to resolve the CEP", example = "WIREMOCK")
+    @Schema(description = "Provider used to resolve the CEP")
     String provider,
-    @Schema(description = "Query status", example = "SUCCESS")
+    @Schema(description = "Query status")
     String status,
-    @Schema(description = "Timestamp when the query was made", example = "2026-04-30T15:22:00")
+    @Schema(description = "Timestamp when the query was made")
     LocalDateTime requestTimestamp
 ) {
 }

@@ -8,17 +8,17 @@ import lombok.Builder;
 @Schema(description = "CEP lookup response")
 public record ZipCodeResponseDTO(
     @JsonProperty("cep")
-    @Schema(description = "CEP in formatted representation", example = "04364-030")
+    @Schema(description = "CEP in formatted representation")
     String zipCode,
-    @Schema(description = "Street name", example = "Rua das Flechas")
+    @Schema(description = "Street name")
     String logradouro,
-    @Schema(description = "Address complement", example = "de 1000 a 1598 - lado par")
+    @Schema(description = "Address complement")
     String complemento,
-    @Schema(description = "District", example = "Vila Santa Catarina")
+    @Schema(description = "District")
     String bairro,
-    @Schema(description = "City", example = "São Paulo")
+    @Schema(description = "City")
     String localidade,
-    @Schema(description = "Federative unit", example = "SP")
+    @Schema(description = "Federative unit")
     String uf
 ) {
 }

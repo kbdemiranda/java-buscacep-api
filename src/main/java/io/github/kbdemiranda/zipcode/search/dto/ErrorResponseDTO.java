@@ -5,15 +5,15 @@ import java.time.LocalDateTime;
 
 @Schema(description = "Standard error response")
 public record ErrorResponseDTO(
-    @Schema(description = "Error timestamp", example = "2026-04-30T15:22:00")
+    @Schema(description = "Error timestamp")
     LocalDateTime timestamp,
-    @Schema(description = "HTTP status code", example = "400")
+    @Schema(description = "HTTP status code")
     int status,
-    @Schema(description = "HTTP reason phrase", example = "Bad Request")
+    @Schema(description = "HTTP reason phrase")
     String error,
-    @Schema(description = "User-friendly error message", example = "CEP must have 8 digits or format 99999-999")
+    @Schema(description = "User-friendly error message")
     String message,
-    @Schema(description = "Request path", example = "/api/v1/zip-codes/00000000")
+    @Schema(description = "Request path")
     String path
 ) {
 }
