@@ -1,0 +1,41 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zip-code-search-api
+    restart: unless-stopped
+    depends_on:
+      - wiremock
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_FLYWAY_ENABLED: "true"
+      CEP_CLIENT_WIREMOCK_URL: http://wiremock:8080
+      CEP_CLIENT_VIACEP_URL: https://viacep.com.br/ws
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    networks:
+      - zip-code-search-network
+
+  wiremock:
+    image: wiremock/wiremock:latest
+    container_name: zip-code-search-wiremock
+    restart: unless-stopped
+    volumes:
+      - ./wiremock/mappings:/home/wiremock/mappings:ro
+    networks:
+      - zip-code-search-network
+
+networks:
+  zip-code-search-network:
+    driver: bridge
+
+# Commands:
+# cp .env.prod.example .env.prod
+# docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+# docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f
+# docker compose -f docker-compose.prod.yml --env-file .env.prod down
